@@ -34,23 +34,26 @@ caculator_t *sCaculator_ = NULL;
 void vApplicationIdleHook()
 {
 
-        if(task_idle_count == 0)
-            task_idle_count = xTaskGetTickCount();
-        int sub = xTaskGetTickCount() - task_idle_count;
-        if(sub > TIME_OUT){
-            DBG("Jump here\n");
-            DBG("Time: %d\n", xTaskGetTickCount() - task_idle_count);
-            task_idle_count = 0;
+    if(0U == task_idle_count)
+        task_idle_count = xTaskGetTickCount();
 
-            // Clear the display and set back light off
-            lcdClearDisplay(lcd);
-            lcdSetBackLight(lcd, false);
+    // Get the subtraction to caculate the time
+    int32_t sub = (int32_t ) (xTaskGetTickCount() - task_idle_count);
 
-            // Set the cursor off, by the way
-            lcdSetCursorDisplay(lcd, false);
+    // Check whether the time over the thresh hold, the system will be switched to hibernate mode
+    if(sub > TIME_OUT){
+        DBG("Time: %d\n", xTaskGetTickCount() - task_idle_count);
+        task_idle_count = 0U;
 
-            // Then, go to the hibernate mode
-            HibernateRequest();
+        // Clear the display and set back light off
+        lcdClearDisplay(lcd);
+        lcdSetBackLight(lcd, false);
+
+        // Set the cursor off, by the way
+        lcdSetCursorDisplay(lcd, false);
+
+        // Then, go to the hibernate mode
+        HibernateRequest();
     }
 }
 
@@ -79,7 +82,7 @@ static void errHandler(void)
 int initTasks()
 {
 
-    int success = -1;
+    int8_t success = -1;
 
     do {
 
@@ -128,6 +131,7 @@ int initTasks()
 
 int main(void) {
 
+    // Set the system clock
     SysCtlClockSet(SYSCTL_SYSDIV_4 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
 
     // Init hibernate mode

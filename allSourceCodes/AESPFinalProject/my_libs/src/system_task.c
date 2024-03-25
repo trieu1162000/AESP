@@ -60,7 +60,7 @@ void buttonTask(void *pvParameters)
 
         // Block until a UART trigger is received...
         BaseType_t taken = xSemaphoreTake(buttonEventSemaphore_, portMAX_DELAY);
-        if (taken == pdFAIL)
+        if (pdFAIL == taken)
         {
             continue;
         }
@@ -68,14 +68,14 @@ void buttonTask(void *pvParameters)
         pressed_key = getKeyOnKeypad(); // poll the keypad
 
         // Reset the idle task timeout
-        task_idle_count = 0;
+        task_idle_count = 0U;
 
         // Debounce for the keypad
         /* Block for 250ms. */
         const TickType_t xDelay = 250 / portTICK_PERIOD_MS;
         vTaskDelay( xDelay );
 
-        if (pressed_key == NULL)
+        if (NULL == pressed_key)
         {
             // if a symbol was pressed
             DBG("Error or invalid char\n");
@@ -115,7 +115,7 @@ void mainTask(void *pvParameters)
 
         // Block until an event is dispatched...
         BaseType_t taken = xSemaphoreTake(dispatchEventSemaphore_, portMAX_DELAY);
-        if (taken == pdFAIL)
+        if (pdFAIL == taken)
         {
             continue;
         }
@@ -211,11 +211,11 @@ void mainTask(void *pvParameters)
         GPIOIntEnable(KEYPAD_PORT_BASE, KEYPAD_ROWS);
 
         // Send the queue here if it different from 'NONE' event
-        if(send_dis_task_val != DISPLAY_NONE)
+        if(DISPLAY_NONE != send_dis_task_val)
         {
-            if( xQueueSend( displayEventQueue_,
+            if( pdPASS != xQueueSend( displayEventQueue_,
                         ( void * ) &send_dis_task_val,
-                        ( TickType_t ) 10 ) != pdPASS )
+                        ( TickType_t ) 10 ) )
             {
                 /* Failed to post the message, even after 10 ticks. */
             }
@@ -230,9 +230,9 @@ void displayTask(void *pvParameters)
    for (;;)
    {
 
-        if( xQueueReceive( displayEventQueue_,
+        if( pdPASS == xQueueReceive( displayEventQueue_,
                             &( recv_dis_task_val ),
-                            ( TickType_t ) portMAX_DELAY ) == pdPASS )
+                            ( TickType_t ) portMAX_DELAY ) )
         {
 
             /* recv_dis_task_val now contains a copy of displayEventQueue_. */
@@ -251,6 +251,10 @@ void displayTask(void *pvParameters)
             default:
                 break;
             }
+        }
+        else
+        {
+            // Fail to receive the messsage queue. Handle the error if needed
         }
 
     }

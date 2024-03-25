@@ -235,7 +235,7 @@ static void lcdWrite(struct lcd_i2c *lcd, const char *buf, size_t count)
         lcd->dirty = false;
     }
 
-    for (i = 0; i < count; i++) {
+    for (i = 0UL; i < count; i++) {
         ch = buf[i];
 
         if (lcd->is_in_esc_seq) {
