@@ -11,8 +11,10 @@
 alphaValue_t alpha_character_val = ALPHA_VALUE_FALSE;
 bool is_alpha_character = false;
 char pressed_key = NULL;
-displayTaskValue_t display_task_val = DISPLAY_NONE;
 bool check_result = true;
+
+static displayTaskValue_t recv_dis_task_val = DISPLAY_NONE;
+static displayTaskValue_t send_dis_task_val = DISPLAY_NONE;
 
 static void parseKey(char key)
 {
@@ -20,7 +22,7 @@ static void parseKey(char key)
         case '*':
             is_alpha_character = !is_alpha_character;
             sFSM_.event_ = E_NONE;
-            display_task_val = DISPLAY_APPEND;
+            send_dis_task_val = DISPLAY_APPEND;
             break;
         case '#':
             sFSM_.event_ = E_CACULATE;
@@ -64,6 +66,9 @@ void buttonTask(void *pvParameters)
         }
 
         pressed_key = getKeyOnKeypad(); // poll the keypad
+
+        // Reset the idle task timeout
+        task_idle_count = 0;
 
         // Debounce for the keypad
         /* Block for 250ms. */
@@ -127,12 +132,12 @@ void mainTask(void *pvParameters)
                 sFSM_.state_ = S_CONVERTING;
                 DBG("State = S_CONVERTING\n");
                 appendAction();
-                display_task_val = DISPLAY_APPEND;
+                send_dis_task_val = DISPLAY_APPEND;
                 break;
             case E_NONE:
                 break;
             default:
-                display_task_val = DISPLAY_NONE;
+                send_dis_task_val = DISPLAY_NONE;
                 break;
             }
             break;
@@ -144,24 +149,24 @@ void mainTask(void *pvParameters)
                 sFSM_.state_ = S_CONVERTING;
                 DBG("State = S_CONVERTING\n");
                 appendAction();
-                display_task_val = DISPLAY_APPEND;
+                send_dis_task_val = DISPLAY_APPEND;
                 break;
             case E_RESET:
                 sFSM_.state_ = S_STOPPED;
                 DBG("State = S_STOPPED\n");
                 clearAction();
-                display_task_val = DISPLAY_CLEAR;
+                send_dis_task_val = DISPLAY_CLEAR;
                 break;
             case E_CACULATE:
                 sFSM_.state_ = S_CACULATING;
                 DBG("State = S_CACULATING\n");
                 check_result = giveResultAction();
-                display_task_val = DISPLAY_RESULT;
+                send_dis_task_val = DISPLAY_RESULT;
                 break;
             case E_NONE:
                 break;
             default:
-                display_task_val = DISPLAY_NONE;
+                send_dis_task_val = DISPLAY_NONE;
                 break;
             }
             break;
@@ -175,30 +180,46 @@ void mainTask(void *pvParameters)
                 clearAction();
                 clearDisplay(lcd);
                 appendAction();
-                display_task_val = DISPLAY_APPEND;
+                send_dis_task_val = DISPLAY_APPEND;
                 break;
             case E_CACULATE:
                 sFSM_.state_ = S_CACULATING;
                 DBG("State = S_CACULATING\n");
                 check_result = giveResultAction();
-                display_task_val = DISPLAY_RESULT;
+                send_dis_task_val = DISPLAY_RESULT;
                 break;
             case E_RESET:
                 sFSM_.state_ = S_STOPPED;
                 DBG("State = S_STOPPED\n");
                 clearAction();
-                display_task_val = DISPLAY_CLEAR;
+                send_dis_task_val = DISPLAY_CLEAR;
                 break;
             case E_NONE:
                 break;
             default:
-                display_task_val = DISPLAY_NONE;
+                send_dis_task_val = DISPLAY_NONE;
                 break;
             }
             break;
         }
 
-        xSemaphoreGive(displayEventSemaphore_);
+        // Then set the columns high so the interrupt can trigger again
+        GPIOPinWrite(KEYPAD_PORT_BASE, KEYPAD_COLS, KEYPAD_COLS);
+
+        // Clear then enable the interrupt again
+        GPIOIntClear(KEYPAD_PORT_BASE, KEYPAD_ROWS);
+        GPIOIntEnable(KEYPAD_PORT_BASE, KEYPAD_ROWS);
+
+        // Send the queue here if it different from 'NONE' event
+        if(send_dis_task_val != DISPLAY_NONE)
+        {
+            if( xQueueSend( displayEventQueue_,
+                        ( void * ) &send_dis_task_val,
+                        ( TickType_t ) 10 ) != pdPASS )
+            {
+                /* Failed to post the message, even after 10 ticks. */
+            }
+        }
 
     }
 }
@@ -209,35 +230,29 @@ void displayTask(void *pvParameters)
    for (;;)
    {
 
-        // Block until an event is dispatched...
-        BaseType_t taken = xSemaphoreTake(displayEventSemaphore_, portMAX_DELAY);
-        if (taken == pdFAIL)
+        if( xQueueReceive( displayEventQueue_,
+                            &( recv_dis_task_val ),
+                            ( TickType_t ) portMAX_DELAY ) == pdPASS )
         {
-            continue;
+
+            /* recv_dis_task_val now contains a copy of displayEventQueue_. */
+            switch (recv_dis_task_val)
+            {
+            case DISPLAY_APPEND:
+                appendDisplay(lcd);
+                break;
+            case DISPLAY_CLEAR:
+                clearDisplay(lcd);
+                DBG("Cleared\n");
+                break;
+            case DISPLAY_RESULT:
+                resultDisplay(lcd);
+                break;
+            default:
+                break;
+            }
         }
 
-        switch (display_task_val)
-        {
-        case DISPLAY_APPEND:
-            appendDisplay(lcd);
-            break;
-        case DISPLAY_CLEAR:
-            clearDisplay(lcd);
-            DBG("Cleared\n");
-            break;
-        case DISPLAY_RESULT:
-            resultDisplay(lcd);
-            break;
-        default:
-            break;
-        }
-
-        // Then set the columns high so the interrupt can trigger again
-        GPIOPinWrite(KEYPAD_PORT_BASE, KEYPAD_COLS, KEYPAD_COLS);
-
-        // Clear then enable the interrupt again
-        GPIOIntClear(KEYPAD_PORT_BASE, KEYPAD_ROWS);
-        GPIOIntEnable(KEYPAD_PORT_BASE, KEYPAD_ROWS);
     }
 }
 
