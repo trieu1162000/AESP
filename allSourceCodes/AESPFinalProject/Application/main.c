@@ -10,12 +10,18 @@
 #include "../my_libs/inc/keypad_api.h"
 #include "../my_libs/inc/caculator_api.h"
 
-// This is used sFSM
-SemaphoreHandle_t acceptEventSemaphore_;
-SemaphoreHandle_t dispatchEventSemaphore_;
-SemaphoreHandle_t displayEventSemaphore_;
-SemaphoreHandle_t buttonEventSemaphore_;
+#define TIME_OUT    7000    // 7s
 
+// Binary Semaphores
+xSemaphoreHandle acceptEventSemaphore_;
+xSemaphoreHandle dispatchEventSemaphore_;
+xSemaphoreHandle buttonEventSemaphore_;
+
+// Single-element Queue
+xQueueHandle displayEventQueue_;
+
+// Definition of global variables, must be initialized beforme entering the main program
+uint32_t task_idle_count = 0U;
 struct lcd_i2c *lcd = NULL;
 caculator_t *sCaculator_ = NULL;
 
@@ -24,6 +30,30 @@ caculator_t *sCaculator_ = NULL;
 // This hook is called by FreeRTOS when an stack overflow error is detected.
 //
 //*****************************************************************************
+
+void vApplicationIdleHook()
+{
+
+        if(task_idle_count == 0)
+            task_idle_count = xTaskGetTickCount();
+        int sub = xTaskGetTickCount() - task_idle_count;
+        if(sub > TIME_OUT){
+            DBG("Jump here\n");
+            DBG("Time: %d\n", xTaskGetTickCount() - task_idle_count);
+            task_idle_count = 0;
+
+            // Clear the display and set back light off
+            lcdClearDisplay(lcd);
+            lcdSetBackLight(lcd, false);
+
+            // Set the cursor off, by the way
+            lcdSetCursorDisplay(lcd, false);
+
+            // Then, go to the hibernate mode
+            HibernateRequest();
+    }
+}
+
 void
 vApplicationStackOverflowHook(xTaskHandle *pxTask, char *pcTaskName)
 {
@@ -68,18 +98,21 @@ int initTasks()
             break;
         }
 
-        displayEventSemaphore_ = xSemaphoreCreateBinary();
-        if (!displayEventSemaphore_) {
+        displayEventQueue_ = xQueueCreate( 1, sizeof( displayTaskValue_t ) );
+
+        if(!displayEventQueue_)
+        {
+            /* Queue was not created and must not be used. */
             break;
         }
 
-        // The UART task will have a highest priority
+        // The button task will have a highest priority
         xTaskCreate(buttonTask, "Button Handler", STACK_SIZE * 3, NULL, 3, NULL);
 
-        // The Bare task will have a higher priority than the Polling task.
+        // The main task will have a lower priority than the button task.
         xTaskCreate(mainTask, "Main Hanlder", STACK_SIZE * 2, NULL, 2, NULL);
 
-        // Create the track tasks at the lowest priority.
+        // Create the display tasks at the lowest priority.
         xTaskCreate(displayTask, "Display Handler", STACK_SIZE, NULL, 1, NULL);
 
         success = 0;
@@ -96,6 +129,9 @@ int initTasks()
 int main(void) {
 
     SysCtlClockSet(SYSCTL_SYSDIV_4 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
+
+    // Init hibernate mode
+    initHibernateMode();
 
     // Init all related peripherals
     initPeriphs();
@@ -130,6 +166,9 @@ int main(void) {
 
      // Enable processor interrupts
      IntMasterEnable();
+
+    // Get the current tick before starting the scheduler
+     task_idle_count = xTaskGetTickCount();
 
      // Startup of the FreeRTOS scheduler.  The program should block here.
      vTaskStartScheduler();
