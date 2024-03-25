@@ -27,6 +27,13 @@
 
 #include "../inc/config_peripherals_api.h"
 
+void initHibernateMode(void){
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_HIBERNATE);
+    HibernateEnableExpClk(SysCtlClockGet());
+    HibernateGPIORetentionEnable();
+    HibernateWakeSet(HIBERNATE_WAKE_PIN);
+}
+
 void initPeriphs(void){
     // Enable for LED Green, I2C LCD
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);

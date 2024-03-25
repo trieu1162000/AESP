@@ -31,7 +31,6 @@ static const char root_char[] = {
 
 #if 0
 static void lcdFlush(struct lcd_i2c *lcd);
-static void lcdSetBacklight(struct lcd_i2c *, bool backlight);
 #endif
 
 static void lcdHandleEscSeqChar(struct lcd_i2c *lcd, char ch);
