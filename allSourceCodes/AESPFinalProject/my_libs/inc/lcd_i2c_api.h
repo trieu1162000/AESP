@@ -81,6 +81,7 @@ struct lcd_i2c {
 };
 
 extern void lcdPrint(struct lcd_i2c *, const char *);
+extern void lcdSetBackLight(struct lcd_i2c *, bool);
 extern void lcdSetCursorBlink(struct lcd_i2c *, bool);
 extern void lcdSetCursorDisplay(struct lcd_i2c *, bool);
 extern void initLCD(struct lcd_i2c *);

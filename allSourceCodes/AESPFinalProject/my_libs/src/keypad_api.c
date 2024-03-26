@@ -17,6 +17,8 @@ static const char chars_on_keypad[KEYPAD_ROW_COUNT][KEYPAD_COL_COUNT] = {
 static uint8_t getRow(unsigned char check_column)
 {
     uint8_t row_pin = 0U;
+
+    // Unreach return variable
     uint8_t ret = 5U;
 
     GPIOPinWrite(KEYPAD_PORT_BASE, KEYPAD_COLS, 0U);
@@ -76,7 +78,7 @@ char getKeyOnKeypad(void)
     uint8_t col = 0U;
 
     row = getRow(KEYPAD_COL_1ST);
-    if (row != 5U)
+    if (5U != row)
     {
         col = 0U;
         GPIOIntClear(KEYPAD_PORT_BASE, KEYPAD_ROWS);
@@ -84,7 +86,7 @@ char getKeyOnKeypad(void)
     }
 
     row = getRow(KEYPAD_COL_2ND);
-    if (row != 5U)
+    if (5U != row)
     {
         col = 1U;
         GPIOIntClear(KEYPAD_PORT_BASE, KEYPAD_ROWS);
@@ -92,7 +94,7 @@ char getKeyOnKeypad(void)
     }
 
     row = getRow(KEYPAD_COL_3RD);
-    if (row != 5U)
+    if (5U != row)
     {
         col = 2U;
         GPIOIntClear(KEYPAD_PORT_BASE, KEYPAD_ROWS);
@@ -100,7 +102,7 @@ char getKeyOnKeypad(void)
     }
 
     row = getRow(KEYPAD_COL_4TH);
-    if (row != 5U)
+    if (5U != row)
     {
         col = 3U;
         GPIOIntClear(KEYPAD_PORT_BASE, KEYPAD_ROWS);

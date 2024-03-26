@@ -9,7 +9,7 @@
 #define MY_LIBS_INC_STATES_H_
 
 typedef enum {
-    S_STOPPED = 0,
+    S_STOPPED = 0U,
     S_CONVERTING,
     S_CACULATING,
 } systemState_t;

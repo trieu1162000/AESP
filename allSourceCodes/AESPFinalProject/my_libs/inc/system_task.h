@@ -33,11 +33,15 @@ typedef enum
     ALPHA_VALUE_FALSE,
 } alphaValue_t;
 
-// This is used sFSM
-extern SemaphoreHandle_t acceptEventSemaphore_;
-extern SemaphoreHandle_t dispatchEventSemaphore_;
-extern SemaphoreHandle_t displayEventSemaphore_;
-extern SemaphoreHandle_t buttonEventSemaphore_;
+extern uint32_t task_idle_count;
+
+// Binary Semaphores
+extern xSemaphoreHandle acceptEventSemaphore_;
+extern xSemaphoreHandle dispatchEventSemaphore_;
+extern xSemaphoreHandle buttonEventSemaphore_;
+
+// Single-element Queue
+extern xQueueHandle displayEventQueue_;
 
 extern void buttonTask(void *);
 extern void displayTask(void *);
@@ -47,6 +51,5 @@ extern bool is_alpha_character;
 extern alphaValue_t alpha_character_val;
 extern char pressed_key;
 extern bool check_result;
-extern displayTaskValue_t display_task_val;
 
 #endif /* MY_LIBS_INC_SYSTEM_TASK_H_ */

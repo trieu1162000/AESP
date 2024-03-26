@@ -12,7 +12,7 @@
 char display_buffer[MAX_LENGTH_LCD] = {'\0'};
 char alpha_display_buffer[MAX_ALPHA_BUFFER] = {'\0'};
 char whole_chars_buffer[MAX_LENGTH_SUPPORTED] = {'\0'};
-uint8_t current_length_buffer = 0;
+uint8_t current_length_buffer = 0U;
 
 static char result_buffer[MAX_LENGTH_LCD] = {'\0'};
 static char double_string[MAX_DOUBLE_STRING] = "0.";
@@ -236,7 +236,7 @@ static void convertAlphaCharacter(char input_character)
 void appendDisplay(struct lcd_i2c *lcd_todo)
 {
     // If press alpha key
-    if(is_alpha_character && alpha_character_val == ALPHA_VALUE_FALSE)
+    if(is_alpha_character && ( ALPHA_VALUE_FALSE == alpha_character_val ))
     {
         uint8_t prev_col = lcd_todo->pos.col;
         // Just display the alpha character
@@ -254,7 +254,7 @@ void appendDisplay(struct lcd_i2c *lcd_todo)
         uint8_t prev_col = lcd_todo->pos.col;
 
         // If alpha key is pressed again
-        if(!is_alpha_character && alpha_character_val == ALPHA_VALUE_TRUE)
+        if(!is_alpha_character && ( ALPHA_VALUE_TRUE == alpha_character_val ))
         {
             // Just clear the alpha character
             lcdGotoXY(lcd_todo, 1, 0);
@@ -343,7 +343,7 @@ void appendAction(void)
         convertAlphaCharacter(pressed_key);
 
         // Append to the buffer with the alpha char buffer
-        if(whole_chars_buffer[MAX_LENGTH_SUPPORTED - 2] == NULL)
+        if(NULL == whole_chars_buffer[MAX_LENGTH_SUPPORTED - 2])
         {
             strcat(whole_chars_buffer, alpha_display_buffer);
             current_length_buffer = current_length_buffer + strlen(alpha_display_buffer);
@@ -357,19 +357,19 @@ void appendAction(void)
     else
     {
         // Handle for the operator
-        if(pressed_key == 'A')
+        if('A' == pressed_key)
         {
             pressed_key = '+';
         }
-        else if(pressed_key == 'B')
+        else if('B' == pressed_key)
         {
             pressed_key = '-';
         }
-        else if(pressed_key == 'C')
+        else if('C' == pressed_key)
         {
             pressed_key = '*';
         }
-        else if(pressed_key == 'D')
+        else if('D' == pressed_key)
         {
             pressed_key = ':';
         }
@@ -378,7 +378,7 @@ void appendAction(void)
             //default option
         }
         // Append to the buffer with the current character (pressed key)
-        if(whole_chars_buffer[MAX_LENGTH_SUPPORTED - 2] == NULL)
+        if(NULL == whole_chars_buffer[MAX_LENGTH_SUPPORTED - 2])
         {
             whole_chars_buffer[strlen(whole_chars_buffer)] = pressed_key;
             current_length_buffer++;
@@ -396,7 +396,7 @@ bool giveResultAction(void)
     // Parse the string to get operators and operands
     parseWholeBuffer(whole_chars_buffer);
 
-    if((sCaculator_->current_numberOfOperators != 0U) && (sCaculator_->current_numberOfOperators >= sCaculator_->current_numberOfOperands))
+    if((0U != sCaculator_->current_numberOfOperators) && (sCaculator_->current_numberOfOperators >= sCaculator_->current_numberOfOperands))
     {
         DBG("Syntax ERROR\n");
         return false;
@@ -408,7 +408,7 @@ bool giveResultAction(void)
     sF_equation_parms.coefficient_x2 = 0.0;
 
     // Depend on the operators, we caculate the result on them
-    int i = 0;
+    uint8_t i = 0U;
     for(;i < sCaculator_->current_numberOfOperators; i++)
     {
         switch (sCaculator_->operators[i])
@@ -459,7 +459,7 @@ bool giveResultAction(void)
             sCaculator_->operands[i] = 0.0;
             break;
         case O_ROOT:
-            if(sCaculator_->operands[i] == 0)
+            if(0.0 == sCaculator_->operands[i])
             {
                 // Syntax ERROR, not support exponent with double type
                 DBG("Syntax ERROR\n");
@@ -491,7 +491,7 @@ bool giveResultAction(void)
         if(changed_sign_index <= sCaculator_->current_numberOfOperators)
         {
             // Need to change O_ADD to O_SUBTRACT
-            if(sCaculator_->operators[changed_sign_index] == O_ADD)
+            if(O_ADD == sCaculator_->operators[changed_sign_index])
                 sCaculator_->operators[changed_sign_index] = O_SUBTRACT;
         }
     }
@@ -500,9 +500,9 @@ bool giveResultAction(void)
     {
         sF_equation_parms.coefficient_x0 = sumAllOperands(sCaculator_);
         eResultType_t result_type = solveQuadraticEquation(sF_equation_parms.coefficient_x2, sF_equation_parms.coefficient_x1, sF_equation_parms.coefficient_x0);
-        if(result_type == SAME_ROOT)
+        if(SAME_ROOT == result_type)
             snprintf(result_buffer, MAX_LENGTH_LCD, "x=%.2f", result_x1);
-        else if (result_type == DIFF_ROOT)
+        else if (DIFF_ROOT == result_type)
             snprintf(result_buffer, MAX_LENGTH_LCD, "x=%.2f, x=%.2f", result_x1, result_x2);
         else
             snprintf(result_buffer, MAX_LENGTH_LCD, "No real root");
@@ -521,8 +521,8 @@ bool giveResultAction(void)
             snprintf(result_buffer, MAX_LENGTH_LCD, "%2f", sCaculator_->current_result);
 
             // Filter for rational number
-            while(result_buffer[strlen(result_buffer) - 1] == '0')
-                result_buffer[strlen(result_buffer) - 1] = '\0';
+            while('0' == result_buffer[strlen(result_buffer) - 1])
+                result_buffer[strlen(result_buffer) - 1UL] = '\0';
         }
         else
         {
@@ -537,7 +537,7 @@ bool giveResultAction(void)
     // Reset the buffer
     memset(whole_chars_buffer, '\0', MAX_LENGTH_SUPPORTED);
     memset(display_buffer, '\0', MAX_LENGTH_LCD);
-    current_length_buffer = 0;
+    current_length_buffer = 0U;
     DBG("Buffer is reset\n");
 
     return true;

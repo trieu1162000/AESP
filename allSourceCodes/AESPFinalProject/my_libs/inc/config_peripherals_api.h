@@ -20,16 +20,16 @@
 #include "driverlib/gpio.h"
 #include "driverlib/pin_map.h"
 #include "driverlib/sysctl.h"
-#include "driverlib/ssi.h"
 #include "driverlib/uart.h"
 #include "driverlib/i2c.h"
 #include "driverlib/interrupt.h"
-#include "driverlib/timer.h"
+#include "driverlib/hibernate.h"
 #include "utils/uartstdio.h"
 #include "debug.h"
 
 extern void initConsole(void);
 extern void initPeriphs(void);
 extern void initI2C(void);
+extern void initHibernateMode(void);
 
 #endif /* MY_LIBS_INC_CONFIG_PERIPHERALS_API_H_ */
