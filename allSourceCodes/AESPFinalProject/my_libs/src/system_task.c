@@ -67,9 +67,6 @@ void buttonTask(void *pvParameters)
 
         pressed_key = getKeyOnKeypad(); // poll the keypad
 
-        // Reset the idle task timeout
-        task_idle_count = 0U;
-
         // Debounce for the keypad
         /* Block for 250ms. */
         const TickType_t xDelay = 250 / portTICK_PERIOD_MS;
@@ -256,6 +253,10 @@ void displayTask(void *pvParameters)
         {
             // Fail to receive the messsage queue. Handle the error if needed
         }
+
+        // Reset the idle task timeout
+        task_idle_count = xTaskGetTickCount();
+        DBG("Brk 2\n");
 
     }
 }

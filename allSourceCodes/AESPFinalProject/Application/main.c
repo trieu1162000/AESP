@@ -10,7 +10,7 @@
 #include "../my_libs/inc/keypad_api.h"
 #include "../my_libs/inc/caculator_api.h"
 
-#define TIME_OUT    7000    // 7s
+#define TIME_OUT    7000    // Timeout is 7 seconds
 
 // Binary Semaphores
 xSemaphoreHandle acceptEventSemaphore_;
@@ -35,14 +35,16 @@ void vApplicationIdleHook()
 {
 
     if(0U == task_idle_count)
+    {
         task_idle_count = xTaskGetTickCount();
+    }
 
     // Get the subtraction to caculate the time
     int32_t sub = (int32_t ) (xTaskGetTickCount() - task_idle_count);
 
     // Check whether the time over the thresh hold, the system will be switched to hibernate mode
     if(sub > TIME_OUT){
-        DBG("Time: %d\n", xTaskGetTickCount() - task_idle_count);
+        DBG("Time: %d\n", sub);
         task_idle_count = 0U;
 
         // Clear the display and set back light off
