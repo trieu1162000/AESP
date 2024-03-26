@@ -164,6 +164,14 @@ static void parseWholeBuffer(char *buffer_to_parse)
                 }
                 sCaculator_->operators[sCaculator_->current_numberOfOperators] = O_EQUATION;
                 sCaculator_->current_numberOfOperators++;
+
+                // Padding with 1 if needed
+                if ( ('0' >= buffer_to_parse[i+1]) && ('9' <= buffer_to_parse[i]) )
+                {
+                    sCaculator_->operands[sCaculator_->current_numberOfOperands] = 1;
+                    sCaculator_->current_numberOfOperands++;
+                }
+
                 sCaculator_->is_new_operand = true;
                 break;
             case '=':
