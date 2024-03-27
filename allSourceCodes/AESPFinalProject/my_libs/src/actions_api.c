@@ -225,6 +225,10 @@ static void convertAlphaCharacter(char input_character)
         strcpy(alpha_display_buffer, "r");
         break;
     case '0':
+        // 'd' means delete the character
+        strcpy(alpha_display_buffer, "d");
+        break;
+    case '#':
         // '=' character for finding equation feature
         strcpy(alpha_display_buffer, "=");
         break;
@@ -234,8 +238,60 @@ static void convertAlphaCharacter(char input_character)
         // Down
     case 'C':
         // Left
+        // Check if the cursor is already in the start
+        if( 0 != lcd->pos.col )
+        {
+            // Move the cursor to the left
+            // There are 2 sub-cases
+            switch(display_buffer[lcd->pos.col - 1])
+            {
+            // Case 1: sin, cos, log, Ans
+            // co's', An's'    
+            case 's':
+            // si'n'
+            case 'n':
+            // lo'g'
+            case 'g':
+                lcd->pos.col = lcd->pos.col - 3;
+                break;
+            // Case 2: Others
+            default:
+                lcd->pos.col--;
+                break;
+            }
+            lcdGotoXY(0, lcd->pos.col);
+            // TODO: Update the display buffer if needed
+        }
+        // Else, do nothing
+
+        break;
     case 'D':
         // Right
+        // Check if the cursor is already in the end
+        if( 0 != lcd->pos.col )
+        {
+            // Move the cursor to the right
+            // There are 2 sub-cases
+            switch(display_buffer[lcd->pos.col - 1])
+            {
+            // Case 1: sin, cos, log, Ans
+            // co's', An's'    
+            case 's':
+            // si'n'
+            case 'n':
+            // lo'g'
+            case 'g':
+                lcd->pos.col = lcd->pos.col + 3;
+                break;
+            // Case 2: Others
+            default:
+                lcd->pos.col++;
+                break;
+            }
+            lcdGotoXY(0, lcd->pos.col);
+            // TODO: Update the display buffer if needed
+        }
+        // Else, do nothing
     default:
         break;
     }
@@ -279,20 +335,42 @@ void appendDisplay(struct lcd_i2c *lcd_todo)
             // In the top of 2 cases, check if the buffer exceed the LCD length supported
             if(current_length_buffer > MAX_LENGTH_LCD - 1)
             {
-                memcpy(display_buffer, whole_chars_buffer + current_length_buffer - MAX_LENGTH_LCD + 1, MAX_LENGTH_LCD - 1);
+                if( ('A' > pressed_key) && ('D' < pressed_key) )
+                {
+                    memcpy(display_buffer, whole_chars_buffer + current_length_buffer - MAX_LENGTH_LCD + 1, MAX_LENGTH_LCD - 1);
 
-                lcdClearDisplay(lcd_todo);
-                lcd_todo->dirty = true;
-                lcdPrint(lcd_todo, display_buffer);
+                    lcdClearDisplay(lcd_todo);
+                    lcd_todo->dirty = true;
+                    lcdPrint(lcd_todo, display_buffer);
+                }
+                else
+                {
+                    // TODO: Update the buffer if needed here
+                }
             }
             else
             {
                 // If previous pressed key is alpha key
                 if(is_alpha_character)
                 {
-                    // Display the alpha buffer
-                    lcdPrint(lcd_todo, alpha_display_buffer);
-                    prev_col = lcd_todo->pos.col;
+                    if( ('A' > pressed_key) && ('D' < pressed_key) )
+                    {
+                        // Display the alpha buffer
+                        lcdPrint(lcd_todo, alpha_display_buffer);
+
+                        // Save the position in term of col
+                        prev_col = lcd_todo->pos.col;
+
+                    }
+                    else
+                    {
+                        // Update the buffer here if needed
+                        // Left
+                        if('C' == pressed_key)
+                        {
+
+                        }
+                    }
 
                     // Clear the alpha character also
                     lcdGotoXY(lcd_todo, 1, 0);
@@ -353,8 +431,16 @@ void appendAction(void)
         // Append to the buffer with the alpha char buffer
         if(NULL == whole_chars_buffer[MAX_LENGTH_SUPPORTED - 2])
         {
-            strcat(whole_chars_buffer, alpha_display_buffer);
-            current_length_buffer = current_length_buffer + strlen(alpha_display_buffer);
+            // Check whether we want to delete 1 or more characters (opposite with append)
+            if('d' == alpha_character_val)
+            {
+                // TODO: Handle for deleting charaters in buffer
+            }
+            else
+            {
+                strcat(whole_chars_buffer, alpha_display_buffer);
+                current_length_buffer = current_length_buffer + strlen(alpha_display_buffer);
+            }
 
         }
         else
