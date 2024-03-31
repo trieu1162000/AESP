@@ -25,7 +25,10 @@ static void parseKey(char key)
             send_dis_task_val = DISPLAY_APPEND;
             break;
         case '#':
-            sFSM_.event_ = E_CACULATE;
+            if(is_alpha_character)
+                sFSM_.event_ = E_TYPED;
+            else
+                sFSM_.event_ = E_CACULATE;
             break;
         case '8':
             if(is_alpha_character)
@@ -66,9 +69,6 @@ void buttonTask(void *pvParameters)
         }
 
         pressed_key = getKeyOnKeypad(); // poll the keypad
-
-        // Reset the idle task timeout
-        task_idle_count = 0U;
 
         // Debounce for the keypad
         /* Block for 250ms. */
@@ -256,6 +256,13 @@ void displayTask(void *pvParameters)
         {
             // Fail to receive the messsage queue. Handle the error if needed
         }
+
+
+        // Reset the display_buffer
+        memset(display_buffer, '\0', MAX_LENGTH_LCD);      
+
+        // Reset the idle task timeout
+        task_idle_count = xTaskGetTickCount();
 
     }
 }
