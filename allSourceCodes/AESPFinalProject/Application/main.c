@@ -33,7 +33,7 @@ caculator_t *sCaculator_ = NULL;
 
 void vApplicationIdleHook()
 {
-
+#ifndef DEBUG
     if(0U == task_idle_count)
     {
         task_idle_count = xTaskGetTickCount();
@@ -57,6 +57,7 @@ void vApplicationIdleHook()
         // Then, go to the hibernate mode
         HibernateRequest();
     }
+#endif
 }
 
 void
