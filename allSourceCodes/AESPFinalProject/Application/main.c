@@ -14,7 +14,7 @@
 #include "../my_libs/inc/keypad_api.h"
 #include "../my_libs/inc/caculator_api.h"
 
-#define TIME_OUT    7000    // Timeout is 7 seconds
+#define TIME_OUT    9000    // Timeout is 9 seconds
 
 // Binary Semaphores
 xSemaphoreHandle acceptEventSemaphore_;
