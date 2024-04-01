@@ -324,6 +324,22 @@ void appendDisplay(struct lcd_i2c *lcd_todo)
         else
         {
             // If another key is pressed, there are 2 sub-cases below
+
+            // Check move up or down first
+            if( ('A' == pressed_key) || ('B' == pressed_key) )
+            {
+                // Copy the buffer
+                memcpy(display_buffer, whole_chars_buffer, MAX_LENGTH_LCD);
+
+                // Clear the buffer before printing
+                lcdGotoXY(lcd_todo, 0, 0);
+                lcdClearLine(lcd_todo);
+
+                // Print the buffer
+                lcdPrint(lcd_todo, display_buffer);
+                lcdGotoXY(lcd_todo, 0, 0);
+            }
+
             // In the top of 2 cases, check if the buffer exceed the LCD length supported
             if( current_length_buffer > (MAX_LENGTH_LCD - 1U) )
             {
@@ -603,8 +619,32 @@ void appendAction(void)
             {
             case 'A':
                 // Up
+                if(sCaculator_ != &sCaculator_list[0])
+                {
+                    sCaculator_--;
+                    memcpy(whole_chars_buffer, sCaculator_->whole_buffer, MAX_LENGTH_SUPPORTED);
+                    current_pos_char_in_buffer = -1;
+                    current_length_buffer = strlen(whole_chars_buffer);
+                }
+                // Else, do nothing
+
+                // Clear the caculator
+                clearParamsCaculator(sCaculator_);
+                break;
             case 'B':
                 // Down
+                if( (sCaculator_ != &sCaculator_list[MAX_SUPPORT_ELEMENTS - 1U]) && (sCaculator_ != &sCaculator_list[current_caculator_element - 1U]) )
+                {
+                    sCaculator_++;
+                    memcpy(whole_chars_buffer, sCaculator_->whole_buffer, MAX_LENGTH_SUPPORTED);
+                    current_pos_char_in_buffer = -1;
+                    current_length_buffer = strlen(whole_chars_buffer);
+                }
+                // Else, do nothing
+
+                // Clear the caculator
+                clearParamsCaculator(sCaculator_);
+                break;
             case 'C':
                 // Left: Only move when not in [0]
                 // Check if the cursor is already in the start
@@ -904,6 +944,33 @@ bool giveResultAction(void)
     }
 
     changed_sign_index = INVALID_VALUE;
+
+    // Save the buffer before reset
+    memcpy(sCaculator_->whole_buffer, whole_chars_buffer, MAX_BUFFER_LENGTH);
+
+    // Save the result
+    double tmp_result = sCaculator_->current_result;
+
+    // Point back to the current caculator element
+    sCaculator_ = &sCaculator_list[current_caculator_element -1];
+
+    // Fix a logic bug here
+    if('\0' != sCaculator_->whole_buffer[0])
+    {
+        // Move to the next element and reset it
+        if(sCaculator_ == &sCaculator_list[MAX_SUPPORT_ELEMENTS - 1])
+        {
+            sCaculator_ = &sCaculator_list[0];
+        }
+        else
+        {
+            current_caculator_element++;
+            sCaculator_ = &sCaculator_list[current_caculator_element -1];
+        }
+        initParamsCaculator(sCaculator_);
+    }
+    // Get the previous result
+    sCaculator_->current_result = tmp_result;
 
     // Reset the buffer
     memset(whole_chars_buffer, '\0', MAX_LENGTH_SUPPORTED);

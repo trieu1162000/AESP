@@ -24,6 +24,8 @@ xQueueHandle displayEventQueue_;
 uint32_t task_idle_count = 0U;
 struct lcd_i2c *lcd = NULL;
 caculator_t *sCaculator_ = NULL;
+caculator_t sCaculator_list[MAX_SUPPORT_ELEMENTS];
+uint8_t current_caculator_element = 1U;
 
 //*****************************************************************************
 //
@@ -159,7 +161,12 @@ int main(void) {
     initKeypad(KEYPAD_PORT_BASE);
 
     // Init all parameter for caculator
-    sCaculator_ = malloc(sizeof(*sCaculator_));
+    // sCaculator_ = (caculator_t *) malloc(MAX_SUPPORT_ELEMENTS * sizeof(caculator_t));
+    // if (sCaculator_ == NULL) {
+    //     DBG("Memory allocation failed.\n");
+    //     return -1;
+    // }
+    sCaculator_ = &sCaculator_list[0];
     initParamsCaculator(sCaculator_);
 
     // Init tasks for FreeRTOS
