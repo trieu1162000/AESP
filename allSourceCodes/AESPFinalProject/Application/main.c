@@ -1,12 +1,16 @@
 #include <FreeRTOS.h>
 #include <task.h>
 #include <semphr.h>
+#include <stdbool.h>
+#include "driverlib/interrupt.h"
+#include "driverlib/sysctl.h"
+#include "inc/hw_memmap.h"
 #include "../my_libs/inc/config_peripherals_api.h"
 #include "../my_libs/inc/lcd_i2c_api.h"
 #include "../my_libs/inc/states.h"
+#include "../my_libs/inc/system_task.h"
 #include "../my_libs/inc/actions_api.h"
 #include "../my_libs/inc/system_FSM_api.h"
-#include "../my_libs/inc/system_task.h"
 #include "../my_libs/inc/keypad_api.h"
 #include "../my_libs/inc/caculator_api.h"
 

@@ -6,12 +6,16 @@
  */
 
 #include "../inc/system_task.h"
+#include "../inc/keypad_api.h"
+#include "../inc/actions_api.h"
 #include <task.h>
+#include "driverlib/gpio.h"
+#include "inc/hw_memmap.h"
 
 alphaValue_t alpha_character_val = ALPHA_VALUE_FALSE;
 bool is_alpha_character = false;
 char pressed_key = NULL;
-bool check_result = true;
+giveResultType_t check_result = MATH_OK;
 
 static displayTaskValue_t recv_dis_task_val = DISPLAY_NONE;
 static displayTaskValue_t send_dis_task_val = DISPLAY_NONE;

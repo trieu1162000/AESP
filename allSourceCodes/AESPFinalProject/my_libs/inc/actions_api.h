@@ -8,14 +8,8 @@
 #ifndef MY_LIBS_INC_ACTIONS_API_H_
 #define MY_LIBS_INC_ACTIONS_API_H_
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <string.h>
-#include "events.h"
-#include "system_FSM_api.h"
 #include "lcd_i2c_api.h"
 #include "system_task.h"
-#include "caculator_api.h"
 
 #define MAX_LENGTH_LCD          (16U)                   // LCD 16x2
 #define MAX_LENGTH_SUPPORTED    (100U)                  // Curently support for 100 character in the buffer
@@ -35,7 +29,7 @@ extern void resultDisplay(struct lcd_i2c *);
 extern void clearDisplay(struct lcd_i2c *);
 
 // Actions for mainTask
-extern bool giveResultAction(void);
+extern giveResultType_t giveResultAction(void);
 extern void clearAction(void);
 extern void appendAction(void);
 

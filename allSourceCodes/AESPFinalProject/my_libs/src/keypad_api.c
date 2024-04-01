@@ -6,6 +6,10 @@
  */
 
 #include "../inc/keypad_api.h"
+#include "../inc/system_task.h"
+#include <portmacro.h>
+#include "driverlib/gpio.h"
+#include "inc/hw_memmap.h"
 
 static const char chars_on_keypad[KEYPAD_ROW_COUNT][KEYPAD_COL_COUNT] = {
     {0x31, 0x32, 0x33, 0x41}, // This row stands for: 1, 2, 3, A with hex value
