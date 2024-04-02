@@ -2,8 +2,10 @@
 #include <task.h>
 #include <semphr.h>
 #include <stdbool.h>
+#include <time.h>
 #include "driverlib/interrupt.h"
 #include "driverlib/sysctl.h"
+#include "driverlib/hibernate.h"
 #include "inc/hw_memmap.h"
 #include "../my_libs/inc/config_peripherals_api.h"
 #include "../my_libs/inc/lcd_i2c_api.h"
@@ -14,7 +16,7 @@
 #include "../my_libs/inc/keypad_api.h"
 #include "../my_libs/inc/caculator_api.h"
 
-#define TIME_OUT    9000    // Timeout is 9 seconds
+#define TIME_OUT    10000    // Timeout is 10 seconds
 
 // Binary Semaphores
 xSemaphoreHandle acceptEventSemaphore_;

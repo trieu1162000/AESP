@@ -140,6 +140,9 @@ void mainTask(void *pvParameters)
                 break;
             case E_NONE:
                 break;
+            case E_RESET:
+                send_dis_task_val = DISPLAY_CLEAR;
+                break;
             default:
                 send_dis_task_val = DISPLAY_NONE;
                 break;

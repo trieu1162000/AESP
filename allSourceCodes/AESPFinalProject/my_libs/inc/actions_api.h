@@ -12,13 +12,14 @@
 #include "system_task.h"
 
 #define MAX_LENGTH_LCD          (16U)                   // LCD 16x2
+#define MAX_LENGTH_DISPLAY_LCD  (17U)
 #define MAX_LENGTH_SUPPORTED    (100U)                  // Curently support for 100 character in the buffer
 #define MAX_ALPHA_BUFFER        (5U)
 #define MAX_DOUBLE_STRING       (30U)
 #define INVALID_VALUE           (MAX_OPERATORS + 1U)    // Unreach value
 
 extern char alpha_display_buffer[MAX_ALPHA_BUFFER];
-extern char display_buffer[MAX_LENGTH_LCD];
+extern char display_buffer[MAX_LENGTH_DISPLAY_LCD];
 extern char whole_chars_buffer[MAX_LENGTH_SUPPORTED];
 extern uint8_t current_length_buffer;
 extern int8_t current_pos_char_in_buffer;
