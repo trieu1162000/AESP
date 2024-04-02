@@ -6,6 +6,8 @@
  */
 
 #include "../inc/lcd_i2c_api.h"
+#include "driverlib/sysctl.h"
+#include "inc/hw_memmap.h"
 
 static const char alpha_char[] = {
   0x08,

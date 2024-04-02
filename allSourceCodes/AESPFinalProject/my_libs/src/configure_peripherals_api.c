@@ -26,6 +26,15 @@
 
 
 #include "../inc/config_peripherals_api.h"
+#include "driverlib/hibernate.h"
+#include "driverlib/uart.h"
+#include "driverlib/i2c.h"
+#include "driverlib/sysctl.h"
+#include "driverlib/pin_map.h"
+#include "driverlib/gpio.h"
+#include "inc/hw_memmap.h"
+#include "inc/hw_types.h"
+#include "inc/hw_i2c.h"
 
 void initHibernateMode(void){
     SysCtlPeripheralEnable(SYSCTL_PERIPH_HIBERNATE);

@@ -1,16 +1,20 @@
 #include <FreeRTOS.h>
 #include <task.h>
 #include <semphr.h>
+#include <stdbool.h>
+#include "driverlib/interrupt.h"
+#include "driverlib/sysctl.h"
+#include "inc/hw_memmap.h"
 #include "../my_libs/inc/config_peripherals_api.h"
 #include "../my_libs/inc/lcd_i2c_api.h"
 #include "../my_libs/inc/states.h"
+#include "../my_libs/inc/system_task.h"
 #include "../my_libs/inc/actions_api.h"
 #include "../my_libs/inc/system_FSM_api.h"
-#include "../my_libs/inc/system_task.h"
 #include "../my_libs/inc/keypad_api.h"
 #include "../my_libs/inc/caculator_api.h"
 
-#define TIME_OUT    7000    // Timeout is 7 seconds
+#define TIME_OUT    9000    // Timeout is 9 seconds
 
 // Binary Semaphores
 xSemaphoreHandle acceptEventSemaphore_;
@@ -24,6 +28,8 @@ xQueueHandle displayEventQueue_;
 uint32_t task_idle_count = 0U;
 struct lcd_i2c *lcd = NULL;
 caculator_t *sCaculator_ = NULL;
+caculator_t sCaculator_list[MAX_SUPPORT_ELEMENTS];
+uint8_t current_caculator_element = 1U;
 
 //*****************************************************************************
 //
@@ -159,7 +165,12 @@ int main(void) {
     initKeypad(KEYPAD_PORT_BASE);
 
     // Init all parameter for caculator
-    sCaculator_ = malloc(sizeof(*sCaculator_));
+    // sCaculator_ = (caculator_t *) malloc(MAX_SUPPORT_ELEMENTS * sizeof(caculator_t));
+    // if (sCaculator_ == NULL) {
+    //     DBG("Memory allocation failed.\n");
+    //     return -1;
+    // }
+    sCaculator_ = &sCaculator_list[0];
     initParamsCaculator(sCaculator_);
 
     // Init tasks for FreeRTOS

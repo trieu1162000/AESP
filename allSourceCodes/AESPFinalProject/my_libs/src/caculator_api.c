@@ -120,5 +120,6 @@ void clearParamsCaculator(caculator_t *calc)
 void initParamsCaculator(caculator_t *calc)
 {
     calc->current_result = 0.0;
+    memset(calc->whole_buffer, '\0', MAX_BUFFER_LENGTH);
     clearParamsCaculator(calc);
 }

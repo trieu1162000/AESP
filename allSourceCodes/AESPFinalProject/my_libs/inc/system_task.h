@@ -10,11 +10,7 @@
 
 #include <FreeRTOS.h>
 #include <semphr.h>
-#include "../inc/states.h"
-#include "../inc/events.h"
-#include "../inc/actions_api.h"
-#include "../inc/system_FSM_api.h"
-#include "../inc/keypad_api.h"
+#include <stdbool.h>
 
 // Minimum stack size for FreeRTOS tasks.
 #define STACK_SIZE 200
@@ -33,6 +29,13 @@ typedef enum
     ALPHA_VALUE_FALSE,
 } alphaValue_t;
 
+typedef enum
+{
+    MATH_OK,
+    MATH_ERROR,
+    SYNTAX_ERROR,
+} giveResultType_t;
+
 extern uint32_t task_idle_count;
 
 // Binary Semaphores
@@ -50,6 +53,6 @@ extern void mainTask(void *);
 extern bool is_alpha_character;
 extern alphaValue_t alpha_character_val;
 extern char pressed_key;
-extern bool check_result;
+extern giveResultType_t check_result;
 
 #endif /* MY_LIBS_INC_SYSTEM_TASK_H_ */

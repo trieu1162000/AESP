@@ -22,6 +22,17 @@ static struct find_equation_parms sF_equation_parms;
 static uint8_t changed_sign_index = INVALID_VALUE;
 static bool is_finding_equation = false;
 
+static bool isOver16Digits(int64_t num) {
+    uint8_t count = 0U;
+    // Counting the number of digits
+    while (num != 0U) {
+        num /= 10U;
+        ++count;
+    }
+    // If count is greater than 16, return true, else return false
+    return (count > 16U) ? true : false;
+}
+
 static void deleteSubstring(char *des_buffer, int start, int length) {
     int buffer_length = strlen(des_buffer);
     if (start < 0 || start >= buffer_length || length <= 0 || start + length > buffer_length) {
@@ -71,7 +82,7 @@ static void insertChar(char *des_buffer, char insert_char, int position) {
     des_buffer[position] = insert_char;
 }
 
-static void parseWholeBuffer(char *buffer_to_parse)
+static bool parseWholeBuffer(char *buffer_to_parse)
 {
     uint8_t i = 0U;
     uint8_t len = strlen(buffer_to_parse);
@@ -90,7 +101,8 @@ static void parseWholeBuffer(char *buffer_to_parse)
                 }
                 else
                 {
-                    // TODO: Handle error here when exceeding the maximum operands which the system support
+                    // Handle error here when exceeding the maximum operands which the system support
+                    return false;
                 }
 
             }
@@ -161,7 +173,11 @@ static void parseWholeBuffer(char *buffer_to_parse)
                 break;
             // Logarith
             case 'l':
-                // TODO: Handle for log with base value is 1
+                // Handle for log with base value is 1
+                if (1.0 == sCaculator_->operands[sCaculator_->current_numberOfOperands])
+                {
+                    return false;
+                }
                 sCaculator_->operators[sCaculator_->current_numberOfOperators] = O_LOG;
                 sCaculator_->current_numberOfOperators++;
                 sCaculator_->is_new_operand = true;
@@ -235,6 +251,7 @@ static void parseWholeBuffer(char *buffer_to_parse)
             }
         }
     }
+    return true;
 }
 
 static void convertAlphaCharacter(char input_character)
@@ -324,6 +341,22 @@ void appendDisplay(struct lcd_i2c *lcd_todo)
         else
         {
             // If another key is pressed, there are 2 sub-cases below
+
+            // Check move up or down first
+            if( ('A' == pressed_key) || ('B' == pressed_key) )
+            {
+                // Copy the buffer
+                memcpy(display_buffer, whole_chars_buffer, MAX_LENGTH_LCD);
+
+                // Clear the buffer before printing
+                lcdGotoXY(lcd_todo, 0, 0);
+                lcdClearLine(lcd_todo);
+
+                // Print the buffer
+                lcdPrint(lcd_todo, display_buffer);
+                lcdGotoXY(lcd_todo, 0, 0);
+            }
+
             // In the top of 2 cases, check if the buffer exceed the LCD length supported
             if( current_length_buffer > (MAX_LENGTH_LCD - 1U) )
             {
@@ -370,7 +403,7 @@ void appendDisplay(struct lcd_i2c *lcd_todo)
                         else
                         {
                             // Copy the buffer
-                            memcpy(display_buffer, whole_chars_buffer + current_pos_char_in_buffer - MAX_LENGTH_LCD + 2, MAX_LENGTH_LCD); // TODO: Fix a bug here
+                            memcpy(display_buffer, whole_chars_buffer + current_pos_char_in_buffer - MAX_LENGTH_LCD + 2, MAX_LENGTH_LCD);
 
                             // Print the buffer
                             lcdGotoXY(lcd_todo, 0, 0);
@@ -573,7 +606,7 @@ void clearDisplay(struct lcd_i2c *lcd_todo)
 
 void resultDisplay(struct lcd_i2c *lcd_todo)
 {
-    if(check_result)
+    if(MATH_OK == check_result)
     {
         // Display the result to the lcd
         uint8_t col = MAX_LENGTH_LCD - strlen(result_buffer);
@@ -581,10 +614,19 @@ void resultDisplay(struct lcd_i2c *lcd_todo)
         lcdPrint(lcd_todo, result_buffer);
         lcdGotoXY(lcd_todo, 0, 0);
     }
-    else
+    else if(SYNTAX_ERROR == check_result)
     {
         lcdClearDisplay(lcd_todo);
         lcdPrint(lcd_todo, "Syntax ERROR");
+    }
+    else if(MATH_ERROR == check_result)
+    {
+        lcdClearDisplay(lcd_todo);
+        lcdPrint(lcd_todo, "Math ERROR");
+    }
+    else
+    {
+        // default option to prevent some klocwork warning
     }
 }
 
@@ -603,8 +645,32 @@ void appendAction(void)
             {
             case 'A':
                 // Up
+                if(sCaculator_ != &sCaculator_list[0])
+                {
+                    sCaculator_--;
+                    memcpy(whole_chars_buffer, sCaculator_->whole_buffer, MAX_LENGTH_SUPPORTED);
+                    current_pos_char_in_buffer = -1;
+                    current_length_buffer = strlen(whole_chars_buffer);
+                }
+                // Else, do nothing
+
+                // Clear the caculator
+                clearParamsCaculator(sCaculator_);
+                break;
             case 'B':
                 // Down
+                if( (sCaculator_ != &sCaculator_list[MAX_SUPPORT_ELEMENTS - 1U]) && (sCaculator_ != &sCaculator_list[current_caculator_element - 1U]) )
+                {
+                    sCaculator_++;
+                    memcpy(whole_chars_buffer, sCaculator_->whole_buffer, MAX_LENGTH_SUPPORTED);
+                    current_pos_char_in_buffer = -1;
+                    current_length_buffer = strlen(whole_chars_buffer);
+                }
+                // Else, do nothing
+
+                // Clear the caculator
+                clearParamsCaculator(sCaculator_);
+                break;
             case 'C':
                 // Left: Only move when not in [0]
                 // Check if the cursor is already in the start
@@ -761,16 +827,20 @@ void appendAction(void)
     }
 }
 
-bool giveResultAction(void)
+giveResultType_t giveResultAction(void)
 {
+    bool ret = false;
 
     // Parse the string to get operators and operands
-    parseWholeBuffer(whole_chars_buffer);
+    ret = parseWholeBuffer(whole_chars_buffer);
+
+    if(false == ret)
+        return MATH_ERROR;
 
     if((0U != sCaculator_->current_numberOfOperators) && (sCaculator_->current_numberOfOperators >= sCaculator_->current_numberOfOperands))
     {
         DBG("Syntax ERROR\n");
-        return false;
+        return SYNTAX_ERROR;
     }
 
     // Reset the value of params related to solveQuadraticEquation function
@@ -824,7 +894,7 @@ bool giveResultAction(void)
             {
                 // Syntax ERROR, not support exponent with double type
                 DBG("Syntax ERROR\n");
-                return false;
+                return SYNTAX_ERROR;
             }
             sCaculator_->operands[i+1] = powerFunc(sCaculator_->operands[i], (int64_t) sCaculator_->operands[i+1]);
             sCaculator_->operands[i] = 0.0;
@@ -834,7 +904,7 @@ bool giveResultAction(void)
             {
                 // Syntax ERROR, not support exponent with double type
                 DBG("Syntax ERROR\n");
-                return false;
+                return SYNTAX_ERROR;
             }
             sCaculator_->operands[i+1] = (pow(sCaculator_->operands[i+1], 1.0/sCaculator_->operands[i]));
             sCaculator_->operands[i] = 0.0;
@@ -850,7 +920,7 @@ bool giveResultAction(void)
                 break;
             // Handle syntax error (Power with base out of range (1, 2))
             default:
-                return false;
+                return SYNTAX_ERROR;
             }
             sCaculator_->operands[i] = 0.0;
             sCaculator_->operands[i+1] = 0.0;
@@ -905,14 +975,49 @@ bool giveResultAction(void)
 
     changed_sign_index = INVALID_VALUE;
 
+    // Save the buffer before reset
+    memcpy(sCaculator_->whole_buffer, whole_chars_buffer, MAX_BUFFER_LENGTH);
+
+    // Save the result
+    double tmp_result = sCaculator_->current_result;
+
+    // Point back to the current caculator element
+    sCaculator_ = &sCaculator_list[current_caculator_element -1];
+
+    // Fix a logic bug here
+    if('\0' != sCaculator_->whole_buffer[0])
+    {
+        // Move to the next element and reset it
+        if(sCaculator_ == &sCaculator_list[MAX_SUPPORT_ELEMENTS - 1])
+        {
+            sCaculator_ = &sCaculator_list[0];
+        }
+        else
+        {
+            current_caculator_element++;
+            sCaculator_ = &sCaculator_list[current_caculator_element -1];
+        }
+        initParamsCaculator(sCaculator_);
+    }
+
     // Reset the buffer
     memset(whole_chars_buffer, '\0', MAX_LENGTH_SUPPORTED);
     memset(display_buffer, '\0', MAX_LENGTH_LCD);
     current_length_buffer = 0U;
     current_pos_char_in_buffer = -1;
-    DBG("Buffer is reset\n");
 
-    return true;
+    if(true == isOver16Digits((int64_t) tmp_result))
+    {
+        // Handle error when exceeding 16 digits
+        sCaculator_->current_result = 0.0;
+        return MATH_ERROR;
+    }
+    else
+    {
+        // Get the previous result
+        sCaculator_->current_result = tmp_result;
+        return MATH_OK;
+    }
 
 }
 

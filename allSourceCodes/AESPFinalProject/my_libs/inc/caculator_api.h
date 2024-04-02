@@ -12,9 +12,11 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define MAX_OPERANDS    10U
-#define MAX_OPERATORS   9U
-#define THRESH_HOLD     0.00000001F
+#define MAX_OPERANDS            10U
+#define MAX_OPERATORS           9U
+#define THRESH_HOLD             0.00000001F
+#define MAX_SUPPORT_ELEMENTS    10U
+#define MAX_BUFFER_LENGTH       100U
 
 struct find_equation_parms
 {
@@ -58,11 +60,14 @@ typedef struct {
     double current_result;
     double operands[MAX_OPERANDS];
     operator_t operators[MAX_OPERATORS];
+    char whole_buffer[MAX_BUFFER_LENGTH];
 } caculator_t;
 
 extern double result_x1;
 extern double result_x2;
 extern caculator_t *sCaculator_;
+extern caculator_t sCaculator_list[MAX_SUPPORT_ELEMENTS];
+extern uint8_t current_caculator_element;
 extern void initParamsCaculator(caculator_t *);
 extern void clearParamsCaculator(caculator_t *);
 extern double sineFunc(double);
