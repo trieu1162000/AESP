@@ -14,7 +14,8 @@
 
 #define MAX_OPERANDS            10U
 #define MAX_OPERATORS           9U
-#define THRESH_HOLD             0.00000001F
+#define POSITIVE_THRESH_HOLD    0.00000001F
+#define NEGATIVE_THRESH_HOLD    -0.00000001F
 #define MAX_SUPPORT_ELEMENTS    10U
 #define MAX_BUFFER_LENGTH       100U
 

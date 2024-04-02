@@ -9,7 +9,7 @@
 #include "../inc/caculator_api.h"
 #include <math.h>
 
-char display_buffer[MAX_LENGTH_LCD] = {'\0'};
+char display_buffer[MAX_LENGTH_DISPLAY_LCD] = {'\0'};
 char alpha_display_buffer[MAX_ALPHA_BUFFER] = {'\0'};
 char whole_chars_buffer[MAX_LENGTH_SUPPORTED] = {'\0'};
 uint8_t current_length_buffer = 0U;
@@ -119,13 +119,47 @@ static bool parseWholeBuffer(char *buffer_to_parse)
             {
             // Plus
             case '+':
-                sCaculator_->operators[sCaculator_->current_numberOfOperators] = O_ADD;
-                sCaculator_->current_numberOfOperators++;
-                sCaculator_->is_new_operand = true;
+                if(sCaculator_->is_new_operand)
+                {
+                    // Skip adding the operator
+                }
+                else
+                {
+                    sCaculator_->operators[sCaculator_->current_numberOfOperators] = O_ADD;
+                    sCaculator_->current_numberOfOperators++;
+                    sCaculator_->is_new_operand = true;
+                }
                 break;
             // Subtract
             case '-':
-                sCaculator_->operators[sCaculator_->current_numberOfOperators] = O_SUBTRACT;
+                if(sCaculator_->is_new_operand)
+                {
+                    // Subtract positive
+                    if('+' == buffer_to_parse[i-1U])
+                    {
+                        sCaculator_->operands[sCaculator_->current_numberOfOperands] = 0.0;
+                        sCaculator_->operators[sCaculator_->current_numberOfOperators] = O_SUBTRACT;
+                    }
+                    // Subtract negative
+                    else if('-' == buffer_to_parse[i-1U])
+                    {
+                        sCaculator_->operands[sCaculator_->current_numberOfOperands] = 0.0;
+                        sCaculator_->operators[sCaculator_->current_numberOfOperators] = O_ADD;
+
+                        // These lines to handle the case for greater than 3 subtract signs (> '---')
+                        buffer_to_parse[i-1] = '+';
+                        buffer_to_parse[i] = '+';
+                    }                    
+                    else
+                    {
+                        sCaculator_->operands[sCaculator_->current_numberOfOperands] = -1.0;
+                        sCaculator_->operators[sCaculator_->current_numberOfOperators] = sCaculator_->operators[sCaculator_->current_numberOfOperators - 1];
+                    }
+                    sCaculator_->current_numberOfOperands++;
+                }
+                else
+                    sCaculator_->operators[sCaculator_->current_numberOfOperators] = O_SUBTRACT;
+
                 sCaculator_->current_numberOfOperators++;
                 sCaculator_->is_new_operand = true;
                 break;
@@ -349,8 +383,8 @@ void appendDisplay(struct lcd_i2c *lcd_todo)
                 memcpy(display_buffer, whole_chars_buffer, MAX_LENGTH_LCD);
 
                 // Clear the buffer before printing
+                lcdClearDisplay(lcd);
                 lcdGotoXY(lcd_todo, 0, 0);
-                lcdClearLine(lcd_todo);
 
                 // Print the buffer
                 lcdPrint(lcd_todo, display_buffer);
@@ -600,6 +634,8 @@ void appendDisplay(struct lcd_i2c *lcd_todo)
 void clearDisplay(struct lcd_i2c *lcd_todo)
 {
     lcdClearDisplay(lcd_todo);
+    is_alpha_character = false;
+    alpha_character_val = ALPHA_VALUE_FALSE;
     DBG("clear display\n");
 
 }
@@ -955,10 +991,8 @@ giveResultType_t giveResultAction(void)
 
         DBG("Result: %d\n", sCaculator_->current_result);
         // Convert double/rational/int to string
-        if((sCaculator_->current_result - ((int64_t)sCaculator_->current_result)) > THRESH_HOLD)
+        if( ( (sCaculator_->current_result - ((int64_t)sCaculator_->current_result)) > POSITIVE_THRESH_HOLD ) || ( (sCaculator_->current_result - ((int64_t)sCaculator_->current_result)) < NEGATIVE_THRESH_HOLD ))
         {
-            DBG("Float\n");
-
             snprintf(result_buffer, MAX_LENGTH_LCD, "%2f", sCaculator_->current_result);
 
             // Filter for rational number
