@@ -119,10 +119,10 @@ int initTasks()
         }
 
         // The button task will have a highest priority
-        xTaskCreate(buttonTask, "Button Handler", STACK_SIZE * 3, NULL, 3, NULL);
+        xTaskCreate(buttonTask, "Button Handler", STACK_SIZE * 3, NULL, 2, NULL);
 
         // The main task will have a lower priority than the button task.
-        xTaskCreate(mainTask, "Main Hanlder", STACK_SIZE * 2, NULL, 2, NULL);
+        xTaskCreate(mainTask, "Main Hanlder", STACK_SIZE * 2, NULL, 1, NULL);
 
         // Create the display tasks at the lowest priority.
         xTaskCreate(displayTask, "Display Handler", STACK_SIZE, NULL, 1, NULL);
