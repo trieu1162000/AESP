@@ -392,7 +392,7 @@ void appendDisplay(struct lcd_i2c *lcd_todo)
             }
 
             // In the top of 2 cases, check if the buffer exceed the LCD length supported
-            if( current_length_buffer > (MAX_LENGTH_LCD - 1U) )
+            if( (MAX_LENGTH_LCD - 1U) < current_length_buffer)
             {
                 // Unless from 'A' to 'D'
                 if( ('A' > pressed_key) || ('D' < pressed_key) )
@@ -407,9 +407,9 @@ void appendDisplay(struct lcd_i2c *lcd_todo)
                         // Copy the buffer
                         memcpy(display_buffer, whole_chars_buffer + current_pos_char_in_buffer - lcd_todo->pos.col + 1, MAX_LENGTH_LCD);
 
-                        // Clear the line first
+                        // Clear the LCD first
+                        lcdClearDisplay(lcd_todo);
                         lcdGotoXY(lcd_todo, 0, 0);
-                        lcdClearLine(lcd_todo);
 
                         // Print the buffer
                         lcdPrint(lcd_todo, display_buffer);
@@ -563,9 +563,9 @@ void appendDisplay(struct lcd_i2c *lcd_todo)
                     {
                         if('0' == pressed_key)
                         {
-                            // Clear the line first
+                            // Clear the LCD first
+                            lcdClearDisplay(lcd_todo);
                             lcdGotoXY(lcd_todo, 0, 0);
-                            lcdClearLine(lcd_todo);
 
                             // Print the buffer
                             memcpy(display_buffer, whole_chars_buffer, MAX_LENGTH_LCD);
@@ -577,7 +577,16 @@ void appendDisplay(struct lcd_i2c *lcd_todo)
                         else
                         {
                             // Display the alpha buffer
+                            if(current_pos_char_in_buffer != (current_length_buffer - 1))
+                            {
+                                lcd_todo->pos.col = lcd_todo->pos.col - 3;
+                                lcdGotoXY(lcd_todo, 0, lcd_todo->pos.col);
+                            }
+
                             lcdPrint(lcd_todo, alpha_display_buffer);
+
+                            // Reset it imemediately
+                            memset(alpha_display_buffer, '\0', MAX_ALPHA_BUFFER);
 
                             // Save the col
                             prev_col = lcd_todo->pos.col;
@@ -607,7 +616,13 @@ void appendDisplay(struct lcd_i2c *lcd_todo)
                     // Print the char
                     char temp_str[2] = {'\0'};
                     temp_str[0] = pressed_key;
+                    if(current_pos_char_in_buffer != (current_length_buffer - 1))
+                    {
+                        lcd_todo->pos.col--;
+                        lcdGotoXY(lcd_todo, 0, lcd_todo->pos.col);
+                    }
                     lcdPrint(lcd_todo, temp_str);
+
 
                     // Save the col
                     prev_col = lcd_todo->pos.col;
@@ -736,7 +751,6 @@ void appendAction(void)
                     }
                 }
                 // Else, do nothing
-                // memset(alpha_display_buffer, '\0', 5);
                 break;
             case 'D':
                 // Right
@@ -769,7 +783,6 @@ void appendAction(void)
                     }
                 }
                 // Else, do nothing
-                // memset(alpha_display_buffer, '\0', 5);
                 break;
             }
         }
@@ -812,15 +825,23 @@ void appendAction(void)
             // Append to the buffer with the alpha char buffer
             if(NULL == whole_chars_buffer[MAX_LENGTH_SUPPORTED - 2])
             {
-
-                // strcat(whole_chars_buffer, alpha_display_buffer);
+                // Insert alpha buffer into the whole buffer
                 insertBuffer(whole_chars_buffer, alpha_display_buffer, current_pos_char_in_buffer);
-                // if((current_length_buffer - 1) == current_pos_char_in_buffer)
+
+                // Increase the column until the end position if needed
+                if( (int)(MAX_LENGTH_LCD - 1U) != lcd->pos.col && ( current_pos_char_in_buffer !=  (current_length_buffer - 1) ) )
+                {
+                    lcd->pos.col = lcd->pos.col + strlen(alpha_display_buffer);
+                    if( (int)(MAX_LENGTH_LCD - 1U) < lcd->pos.col )
+                        lcd->pos.col = (int) (MAX_LENGTH_LCD - 1U);
+                }
+
                 current_pos_char_in_buffer = current_pos_char_in_buffer + strlen(alpha_display_buffer);
                 current_length_buffer = current_length_buffer + strlen(alpha_display_buffer);
 
             }
             else
+                // Do nothing here if the buffer is full
                 DBG("Unknown ERROR: Exceed the maximum buffer\n");
         }
 
@@ -846,13 +867,18 @@ void appendAction(void)
         }
         else
         {
-            //default option
+            // default option
         }
         // Append to the buffer with the current character (pressed key)
         if(NULL == whole_chars_buffer[MAX_LENGTH_SUPPORTED - 2])
         {
+            // Insert the character
             insertChar(whole_chars_buffer, pressed_key, current_pos_char_in_buffer);
-            // if((current_length_buffer - 1) == current_pos_char_in_buffer)
+
+            // Increase the column until the end position if needed
+            if( (int)(MAX_LENGTH_LCD - 1U) > lcd->pos.col && ( ( current_pos_char_in_buffer !=  (current_length_buffer - 1) ) ) )
+                lcd->pos.col++;
+
             current_pos_char_in_buffer++;
             current_length_buffer++;
 
@@ -1037,6 +1063,7 @@ giveResultType_t giveResultAction(void)
     // Reset the buffer
     memset(whole_chars_buffer, '\0', MAX_LENGTH_SUPPORTED);
     memset(display_buffer, '\0', MAX_LENGTH_LCD);
+    memset(alpha_display_buffer, '\0', MAX_ALPHA_BUFFER);
     current_length_buffer = 0U;
     current_pos_char_in_buffer = -1;
 
@@ -1058,13 +1085,12 @@ giveResultType_t giveResultAction(void)
 void clearAction(void)
 {
     clearParamsCaculator(sCaculator_);
-    // is_alpha_character = false;
-    // alpha_character_val = ALPHA_VALUE_FALSE;
 
     memset(whole_chars_buffer, '\0', MAX_LENGTH_SUPPORTED);
     memset(display_buffer, '\0', MAX_LENGTH_LCD);
+    memset(alpha_display_buffer, '\0', MAX_ALPHA_BUFFER);
+
     current_length_buffer = 0U;
     current_pos_char_in_buffer = -1;
-    DBG("clear action\n");
 
 }
