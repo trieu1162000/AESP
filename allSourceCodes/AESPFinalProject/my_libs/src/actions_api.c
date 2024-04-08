@@ -149,7 +149,13 @@ static bool parseWholeBuffer(char *buffer_to_parse)
                         // These lines to handle the case for greater than 3 subtract signs (> '---')
                         buffer_to_parse[i-1] = '+';
                         buffer_to_parse[i] = '+';
-                    }                    
+                    }
+                    else if('x' == buffer_to_parse[i-1U])
+                    {
+                        // do nothing
+                        sCaculator_->current_numberOfOperands--;
+
+                    }
                     else
                     {
                         sCaculator_->operands[sCaculator_->current_numberOfOperands] = -1.0;
@@ -270,9 +276,10 @@ static bool parseWholeBuffer(char *buffer_to_parse)
                 {
                     sCaculator_->operands[sCaculator_->current_numberOfOperands] = 1;
                     sCaculator_->current_numberOfOperands++;
+                    sCaculator_->is_new_operand = false;
                 }
-
-                sCaculator_->is_new_operand = true;
+                else
+                    sCaculator_->is_new_operand = true;
                 break;
             case '=':
                 sCaculator_->operators[sCaculator_->current_numberOfOperators] = O_SUBTRACT;
@@ -958,7 +965,15 @@ giveResultType_t giveResultAction(void)
                 DBG("Syntax ERROR\n");
                 return SYNTAX_ERROR;
             }
-            sCaculator_->operands[i+1] = powerFunc(sCaculator_->operands[i], (int64_t) sCaculator_->operands[i+1]);
+
+            if(0.0 > sCaculator_->operands[i])
+            {
+                double temp_operand = -sCaculator_->operands[i];
+                temp_operand = powerFunc(temp_operand,  (int64_t) sCaculator_->operands[i+1]);
+                sCaculator_->operands[i+1] = -temp_operand;
+            } 
+            else
+                sCaculator_->operands[i+1] = powerFunc(sCaculator_->operands[i], (int64_t) sCaculator_->operands[i+1]);
             sCaculator_->operands[i] = 0.0;
             break;
         case O_ROOT:
