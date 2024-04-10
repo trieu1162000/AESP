@@ -14,6 +14,8 @@ typedef enum
     S_LEDON,
 } ledState_t;
 
+extern enum ledValue led_val;
+
 void ledControlStateMachineUpdate(void);
 
 #endif /* DRIVERS_INC_LEDCONTROLSTATEMACHINE_H_ */

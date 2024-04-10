@@ -5,7 +5,7 @@
  *      Author: trieu
  */
 
-#include "motionDetectorMachine.h"
+#include "ledControlStateMachine.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include "inc/hw_memmap.h"
@@ -15,6 +15,8 @@
 #include "utils/uartstdio.h"
 #include "debug.h"
 
+enum ledValue led_val = OFF;
+
 static ledControlState_t ledState = S_LEDOFF;
 
 #ifdef DEBUG
@@ -22,8 +24,13 @@ static const char *stateName[4] = {
     "S_LEDOFF",
     "S_LEDON",
 };
-
 #endif
+
+static void alarmLEDControl(enum ledValue val)
+{
+    ledControl(LEDRED, led_val);
+}
+
 void ledControlStateMachineUpdate(void)
 {
     switch (ledState)
@@ -47,17 +54,11 @@ void ledControlStateMachineUpdate(void)
     switch (ledState)
     {
     case S_LEDOFF:
-        // TODO: Disable the timer
-
         // Turn off the LED
-        led_val = 0U;
-        ledControl(led_val)
+        alarmLEDControl(OFF);
         break;
-    case S_MOTION:
-        // TODO: Enable the timer
-
+    case S_LEDON:
         // Turn on the LED with 1 Hz frequency
-        led_val = 1U;
-        ledControl(led_val)
+        alarmLEDControl(led_val);
     }
 }

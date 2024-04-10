@@ -4,11 +4,11 @@
  *  Created on: Apr 9, 2024
  *      Author: Trieu Huynh Pham Nhat
  */
-#include <doorControlStateMachine.h>
+#include "doorControlStateMachine.h"
+#include "led.h"
 
 uint32_t doorTimer = 0U;
 
-static uint8_t open_door = 0U;
 static doorState_t doorState = S_CLOSE;
 
 #ifdef DEBUG
@@ -19,6 +19,12 @@ static const char *stateName[3] = {
 };
 
 #endif
+
+static void doorControl(enum doorValue val)
+{
+    // Green LED
+    ledControl()
+}
 
 void doorControlStateMachineUpdate(void)
 {
@@ -61,13 +67,11 @@ void doorControlStateMachineUpdate(void)
     {
     case S_CLOSE:
         // Close the door
-        open_door = 0U;
-        doorControl(open_door);
+        doorControl(CLOSE);
         break;
     case S_OPEN:
     case S_OPEN_WAIT:
         // Open the door
-        open_door = 1U;
-        doorControl(open_door);
+        doorControl(OPEN);
     }
 }

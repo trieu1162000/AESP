@@ -17,15 +17,21 @@
 #include "driverlib/rom.h"
 #include "driverlib/sysctl.h"
 
-#define LED_GPIO_PERIPH     SYSCTL_PERIPH_GPIOF
-#define LED_GPIO_BASE       GPIO_PORTF_BASE
+#define LED_GPIO_PERIPH         (SYSCTL_PERIPH_GPIOF)
+#define LED_GPIO_BASE           (GPIO_PORTF_BASE)
 
-enum ledNumber {LEDRED = 0, LEDGREEN, LEDBLUE};
-enum ledState  {OFF=0,ON=1};
-
-extern uint8_t led_val;
+enum ledNumber
+{
+    LEDRED = 0,     // Alarm LED
+    LEDGREEN,       // Door
+};
+enum ledValue
+{
+    OFF = 0,
+    ON = 1,
+};
 
 extern void ledInit(void);
-extern void ledControl(uint8_t);
+extern void ledControl(enum ledNumber, enum controlState);
 
 #endif /* LED_H_ */

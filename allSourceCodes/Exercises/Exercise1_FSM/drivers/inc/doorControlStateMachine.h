@@ -17,6 +17,12 @@ typedef enum
     S_OPEN_WAIT,
 } doorState_t;
 
+enum doorVal
+{
+    CLOSE = 0,
+    OPEN,
+};
+
 extern uint32_t doorTimer;
 
 void doorControlStateMachineUpdate(void);

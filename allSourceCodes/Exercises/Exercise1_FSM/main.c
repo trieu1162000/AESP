@@ -37,7 +37,6 @@
 //
 //*****************************************************************************
 
-
 #include <doorControlStateMachine.h>
 #include <doorControlStateMachine.h>
 #include <stdbool.h>
@@ -51,10 +50,10 @@
 #include "driverlib/uart.h"
 #include "utils/uartstdio.h"
 #include "switches.h"
-"
-#include <motionDetector.h>#ifdef DEBUG
-void
-InitConsole(void)
+#include <motionDetector.h>
+
+#ifdef DEBUG
+void InitConsole(void)
 {
     //
     // Enable GPIO port A which is used for UART0 pins.
@@ -93,16 +92,13 @@ InitConsole(void)
 }
 #endif
 
-void
-SysTickIntHandler(void)
+void SysTickIntHandler(void)
 {
-    if (sensorTimer>0)
+    if (sensorTimer > 0)
         sensorTimer--;
-
 }
 
-int
-main(void)
+int main(void)
 {
 
     // Set the system clock
@@ -110,8 +106,7 @@ main(void)
                    SYSCTL_XTAL_16MHZ);
 
     // Set the Systick period
-    SysTickPeriodSet(SysCtlClockGet()/1000);
-
+    SysTickPeriodSet(SysCtlClockGet() / 1000);
 
     // Enable interrupts to the processor.
     IntMasterEnable();
@@ -128,7 +123,7 @@ main(void)
     // Init LED and Door (Red & Green LEDs)
     ledInit();
 
-#ifdef  DEBUG
+#ifdef DEBUG
     InitConsole();
     DBG("Exercise 1\n");
     DBG("Debug is ON\n\n");
