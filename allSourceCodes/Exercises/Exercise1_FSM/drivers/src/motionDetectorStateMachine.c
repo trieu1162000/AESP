@@ -5,28 +5,30 @@
  *      Author: Trieu Huynh Pham Nhat
  */
 
-#include "motionDetectorMachine.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include "inc/hw_memmap.h"
 #include "driverlib/gpio.h"
-#include "switches.h"
+#include "switch.h"
 #include "led.h"
-#include "utils/uartstdio.h"
-#include "debug.h"
+#include "switch.h"
+#include "motionDetectorStateMachine.h"
+
+#define SENSOR_ON     PRESSED
+#define SENSOR_OFF    RELEASED
 
 uint8_t sensorTimer = 0U;
 uint8_t mntSensorVal = 0U;
+
+static uint8_t pressed_counter = 0U;
 static motionDetectorState_t motionState = S_NOMOTION;
 
-#ifdef DEBUG
-static const char *stateName[4] = {
-    "S_NOMOTION",
-    "S_NOMOTION_WAIT",
-    "S_MOTION",
-    "S_MOTION_WAIT"};
+static sw_t getSensorState(void)
+{
+    // Return the state of SW1
+    return switchState();
+}
 
-#endif
 
 uint8_t getMotionSensorValue(void)
 {
@@ -38,50 +40,50 @@ void motionDetectorStateMachineUpdate(void)
     switch (motionState)
     {
     case S_NOMOTION:
-        if (getSensorState(1) == ON)
+        if ( (getSensorState() == SENSOR_ON) && (pressed_counter == 0U) )
         {
             motionState = S_NOMOTION_WAIT;
             // Set the timer to 50 ms
             sensorTimer = 50;
-            DBG("motionState = %s\n", stateName[motionState]);
         }
         break;
     case S_NOMOTION_WAIT:
-        if (getSensorState(1) == OFF)
+        if (getSensorState() == SENSOR_OFF)
         {
             motionState = S_NOMOTION;
-            DBG("motionState = %s\n", stateName[motionState]);
         }
         else
         {
             if (sensorTimer == 0U)
             {
                 motionState = S_MOTION;
-                DBG("motionState = %s\n", stateName[motionState]);
+
+                // Set the counter
+                pressed_counter = 1U;
             }
         }
         break;
     case S_MOTION:
-        if (getSensorState(1) == ON)
+        if ( (getSensorState() == SENSOR_ON) && (pressed_counter == 1U) )
         {
             motionState = S_MOTION_WAIT;
             // Set the timer to 50 ms
             sensorTimer = 50;
-            DBG("motionState = %s\n", stateName[motionState]);
         }
         break;
     case S_MOTION_WAIT:
-        if (getSensorState(1) == OFF)
+        if (getSensorState() == SENSOR_OFF)
         {
             motionState = S_MOTION;
-            DBG("motionState = %s\n", stateName[motionState]);
         }
         else
         {
             if (sensorTimer == 0U)
             {
                 motionState = S_NOMOTION;
-                DBG("motionState = %s\n", stateName[motionState]);
+
+                // Set the counter
+                pressed_counter = 0U;
             }
         }
         break;

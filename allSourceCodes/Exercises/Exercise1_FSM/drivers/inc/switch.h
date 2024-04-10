@@ -1,5 +1,5 @@
 /*
- * switches.h
+ * switch.h
  *
  *  Created on: Apr 9, 2024
  *      Author: Trieu Huynh Pham Nhat
@@ -21,13 +21,14 @@
 #define SW_GPIO_PERIPH SYSCTL_PERIPH_GPIOF
 #define SW_GPIO_BASE GPIO_PORTF_BASE
 #define SW1_PIN GPIO_PIN_4
-#define SW2_PIN GPIO_PIN_0
+
 typedef enum
 {
     PRESSED,
     RELEASED
 } sw_t;
-void switchInit(void);
 
-sw_t switchState(int SWnumber);
+extern void switchInit(void);
+extern sw_t switchState(void);
+
 #endif /* SWITCHES_H_ */

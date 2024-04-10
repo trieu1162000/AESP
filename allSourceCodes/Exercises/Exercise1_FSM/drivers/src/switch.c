@@ -4,8 +4,9 @@
  *  Created on: Apr 9, 2024
  *      Author: Trieu Huynh Pham Nhat
  */
-#include "switches.h"
-void        switchInit(void)
+#include "switch.h"
+
+void switchInit(void)
 {
     //
     // Enable the GPIO port to which the sensors are connected.
@@ -23,24 +24,15 @@ void        switchInit(void)
     //
     // Set each of the button GPIO pins as an input with a pull-up.
     //
-    ROM_GPIODirModeSet(SW_GPIO_BASE, SW1_PIN | SW2_PIN, GPIO_DIR_MODE_IN);
-    ROM_GPIOPadConfigSet(SW_GPIO_BASE, SW1_PIN | SW2_PIN,
+    ROM_GPIODirModeSet(SW_GPIO_BASE, SW1_PIN, GPIO_DIR_MODE_IN);
+    ROM_GPIOPadConfigSet(SW_GPIO_BASE, SW1_PIN,
                          GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
-
 }
-sw_t        switchState(int SWnumber)
+
+sw_t switchState(void)
 {
-    switch    (SWnumber)
-        {
-            case 1:
-                if (GPIOPinRead(SW_GPIO_BASE, SW1_PIN) == 0) return PRESSED;
-                else return RELEASED;
-
-            case 2:
-                if (GPIOPinRead(SW_GPIO_BASE, SW2_PIN) == 0) return PRESSED;
-                else return RELEASED;
-
-        }
+    if (GPIOPinRead(SW_GPIO_BASE, SW1_PIN) == 0)
+        return PRESSED;
+    else
+        return RELEASED;
 }
-
-

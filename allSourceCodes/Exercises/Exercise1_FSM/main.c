@@ -37,8 +37,6 @@
 //
 //*****************************************************************************
 
-#include <doorControlStateMachine.h>
-#include <doorControlStateMachine.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include "inc/hw_memmap.h"
@@ -49,53 +47,35 @@
 #include "driverlib/systick.h"
 #include "driverlib/uart.h"
 #include "utils/uartstdio.h"
-#include "switches.h"
-#include <motionDetector.h>
-
-#ifdef DEBUG
-void InitConsole(void)
-{
-    //
-    // Enable GPIO port A which is used for UART0 pins.
-    // TODO: change this to whichever GPIO port you are using.
-    //
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
-
-    //
-    // Configure the pin muxing for UART0 functions on port A0 and A1.
-    // This step is not necessary if your part does not support pin muxing.
-    // TODO: change this to select the port/pin you are using.
-    //
-    GPIOPinConfigure(GPIO_PA0_U0RX);
-    GPIOPinConfigure(GPIO_PA1_U0TX);
-
-    //
-    // Enable UART0 so that we can configure the clock.
-    //
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0);
-
-    //
-    // Use the internal 16MHz oscillator as the UART clock source.
-    //
-    UARTClockSourceSet(UART0_BASE, UART_CLOCK_PIOSC);
-
-    //
-    // Select the alternate (UART) function for these pins.
-    // TODO: change this to select the port/pin you are using.
-    //
-    GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
-
-    //
-    // Initialize the UART for console I/O.
-    //
-    UARTStdioConfig(0, 115200, 16000000);
-}
-#endif
+#include "switch.h"
+#include "led.h"
+#include "doorControlStateMachine.h"
+#include "motionDetectorStateMachine.h"
+#include "ledControlStateMachine.h"
 
 void SysTickIntHandler(void)
 {
     if (sensorTimer > 0)
         sensorTimer--;
+
+    if (doorTimer > 0)
+        doorTimer--;
+
+    if (ledTimer > 0)
+    {
+        ledTimer--;
+    }
+    else
+    {
+        // Trigger the led_val
+        if(led_val == ON)
+            led_val = OFF;
+        else
+            led_val = ON;
+
+        // Set the timer to 1s (1Hz)
+        ledTimer = 500U;
+    }
 }
 
 int main(void)
@@ -120,14 +100,8 @@ int main(void)
     // Init motion sesnsor (SW1)
     switchInit();
 
-    // Init LED and Door (Red & Green LEDs)
+    // Init LED and Door (Red & Blue LEDs)
     ledInit();
-
-#ifdef DEBUG
-    InitConsole();
-    DBG("Exercise 1\n");
-    DBG("Debug is ON\n\n");
-#endif
 
     while(1)
     {

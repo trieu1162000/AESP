@@ -8,12 +8,15 @@
 #ifndef DRIVERS_INC_LEDCONTROLSTATEMACHINE_H_
 #define DRIVERS_INC_LEDCONTROLSTATEMACHINE_H_
 
+#include <stdint.h>
+
 typedef enum
 {
     S_LEDOFF = 0,
     S_LEDON,
-} ledState_t;
+} ledControlState_t;
 
+extern uint32_t ledTimer;
 extern enum ledValue led_val;
 
 void ledControlStateMachineUpdate(void);

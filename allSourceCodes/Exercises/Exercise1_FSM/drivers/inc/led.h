@@ -23,7 +23,7 @@
 enum ledNumber
 {
     LEDRED = 0,     // Alarm LED
-    LEDGREEN,       // Door
+    LEDBLUE,       // Door
 };
 enum ledValue
 {
@@ -32,6 +32,6 @@ enum ledValue
 };
 
 extern void ledInit(void);
-extern void ledControl(enum ledNumber, enum controlState);
+extern void ledControl(enum ledNumber, enum ledValue);
 
 #endif /* LED_H_ */

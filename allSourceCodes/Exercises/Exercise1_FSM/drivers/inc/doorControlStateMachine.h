@@ -17,7 +17,7 @@ typedef enum
     S_OPEN_WAIT,
 } doorState_t;
 
-enum doorVal
+enum doorValue
 {
     CLOSE = 0,
     OPEN,

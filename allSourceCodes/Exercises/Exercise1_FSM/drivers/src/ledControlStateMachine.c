@@ -5,30 +5,22 @@
  *      Author: trieu
  */
 
-#include "ledControlStateMachine.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include "inc/hw_memmap.h"
 #include "driverlib/gpio.h"
-#include "switches.h"
 #include "led.h"
-#include "utils/uartstdio.h"
-#include "debug.h"
+#include "ledControlStateMachine.h"
+#include "motionDetectorStateMachine.h"
 
 enum ledValue led_val = OFF;
+uint32_t ledTimer = 500U;
 
 static ledControlState_t ledState = S_LEDOFF;
 
-#ifdef DEBUG
-static const char *stateName[4] = {
-    "S_LEDOFF",
-    "S_LEDON",
-};
-#endif
-
 static void alarmLEDControl(enum ledValue val)
 {
-    ledControl(LEDRED, led_val);
+    ledControl(LEDRED, val);
 }
 
 void ledControlStateMachineUpdate(void)
@@ -39,14 +31,12 @@ void ledControlStateMachineUpdate(void)
         if (getMotionSensorValue() == 1)
         {
             ledState = S_LEDON;
-            DBG("ledState = %s\n", stateName[ledState]);
         }
         break;
     case S_LEDON:
         if (getMotionSensorValue() == 0)
         {
             ledState = S_LEDOFF;
-            DBG("ledState = %s\n", stateName[ledState]);
         }
         break;
     }
