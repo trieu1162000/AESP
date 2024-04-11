@@ -1,0 +1,15 @@
+{
+    "files.associations": {
+        "system_task.h": "c",
+        "actions_api.h": "c",
+        "system_fsm_api.h": "c",
+        "states.h": "c",
+        "lcd_i2c_api.h": "c",
+        "config_peripherals_api.h": "c",
+        "keypad_api.h": "c",
+        "events.h": "c",
+        "caculator_api.h": "c",
+        "string.h": "c",
+        "stdlib.h": "c"
+    }
+}
