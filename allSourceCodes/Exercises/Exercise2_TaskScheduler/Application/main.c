@@ -11,10 +11,8 @@
 #include "../my_libs/inc/system_task.h"
 
 // Binary Semaphores
-xSemaphoreHandle dispatchEventSemaphore_;
-
-// Definition of global variables, must be initialized beforme entering the main program
-
+xSemaphoreHandle SW1PressedSemaphore_;
+xSemaphoreHandle SW2PressedSemaphore_;
 
 //*****************************************************************************
 //
@@ -37,6 +35,7 @@ vApplicationStackOverflowHook(xTaskHandle *pxTask, char *pcTaskName)
     //
     while(1)
     {
+        // Spin...
     }
 }
 
@@ -56,11 +55,18 @@ int initTasks()
 
     do {
 
-        dispatchEventSemaphore_ = xSemaphoreCreateBinary();
-        if (!dispatchEventSemaphore_) {
+        // Create the semaphores
+        SW1PressedSemaphore_ = xSemaphoreCreateBinary();
+        if (!SW1PressedSemaphore_) {
             break;
         }
 
+        SW2PressedSemaphore_ = xSemaphoreCreateBinary();
+        if (!SW2PressedSemaphore_) {
+            break;
+        }
+
+        // Create the tasks
         // The SW tasks will have a highest priority
         xTaskCreate(SW1Task, "SW1 Handler", STACK_SIZE, NULL, 2, NULL);
         xTaskCreate(SW2Task, "SW2 Handler", STACK_SIZE, NULL, 2, NULL);
@@ -97,7 +103,7 @@ int main(void) {
      }
 
      // Enable processor interrupts
-//     IntMasterEnable();
+    IntMasterEnable();
 
      // Startup of the FreeRTOS scheduler.  The program should block here.
      vTaskStartScheduler();

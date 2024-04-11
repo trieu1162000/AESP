@@ -13,12 +13,16 @@
 #include <stdbool.h>
 
 // Minimum stack size for FreeRTOS tasks.
-#define STACK_SIZE 200
+#define STACK_SIZE          (200)
+#define LED_GREEN_TIME      (15000U / portTICK_PERIOD_MS)
+#define LED_YELLOW_TIME     (3000U / portTICK_PERIOD_MS)
+#define LED_RED_TIME        (15000U / portTICK_PERIOD_MS)
 
-extern uint32_t period_led_time;
+extern volatile uint32_t period_led_time;
 
 // Binary Semaphores
-extern xSemaphoreHandle dispatchEventSemaphore_;
+extern xSemaphoreHandle SW1PressedSemaphore_;
+extern xSemaphoreHandle SW2PressedSemaphore_;
 
 extern void SW1Task(void *);
 extern void SW2Task(void *);
