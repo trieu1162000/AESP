@@ -36,7 +36,7 @@ uint8_t getMotionSensorValue(void)
 
 void motionDetectorStateMachineUpdate(void)
 {
-    sw_t ret = switchState();
+    sw_t ret = getSensorState();
 
     switch (motionState)
     {

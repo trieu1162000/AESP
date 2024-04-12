@@ -34,8 +34,6 @@ void SWIntHandler(void)
         // If the SW1Task was successfully woken, then yield execution to it
         // and go there now (instead of changing context to another task).
         portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-
-        DBG("SW1\n");
     }
 
     else if( ( state & GPIO_INT_PIN_4 ) == GPIO_INT_PIN_4 )
