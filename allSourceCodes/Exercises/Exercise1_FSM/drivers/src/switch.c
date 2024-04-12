@@ -5,6 +5,7 @@
  *      Author: Trieu Huynh Pham Nhat
  */
 #include "switch.h"
+#include "debug.h"
 
 void switchInit(void)
 {
@@ -32,7 +33,18 @@ void switchInit(void)
 sw_t switchState(void)
 {
     if (GPIOPinRead(SW_GPIO_BASE, SW1_PIN) == 0)
-        return PRESSED;
+    {
+        // SysCtlDelay( (SysCtlClockGet() / 3) / 1000 * 200);
+        if (GPIOPinRead(SW_GPIO_BASE, SW1_PIN) == 0)
+        {
+            DBG("Pressed\n");
+            return PRESSED;
+        }
+        else
+        {
+            return RELEASED;
+        }
+    }
     else
         return RELEASED;
 }

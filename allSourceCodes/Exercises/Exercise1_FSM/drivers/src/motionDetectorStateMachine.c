@@ -20,7 +20,6 @@
 uint8_t sensorTimer = 0U;
 uint8_t mntSensorVal = 0U;
 
-static uint8_t pressed_counter = 0U;
 static motionDetectorState_t motionState = S_NOMOTION;
 
 static sw_t getSensorState(void)
@@ -37,10 +36,12 @@ uint8_t getMotionSensorValue(void)
 
 void motionDetectorStateMachineUpdate(void)
 {
+    sw_t ret = switchState();
+
     switch (motionState)
     {
     case S_NOMOTION:
-        if ( (getSensorState() == SENSOR_ON) && (pressed_counter == 0U) )
+        if (ret == SENSOR_ON)
         {
             motionState = S_NOMOTION_WAIT;
             // Set the timer to 50 ms
@@ -48,7 +49,7 @@ void motionDetectorStateMachineUpdate(void)
         }
         break;
     case S_NOMOTION_WAIT:
-        if (getSensorState() == SENSOR_OFF)
+        if (ret == SENSOR_OFF)
         {
             motionState = S_NOMOTION;
         }
@@ -57,14 +58,11 @@ void motionDetectorStateMachineUpdate(void)
             if (sensorTimer == 0U)
             {
                 motionState = S_MOTION;
-
-                // Set the counter
-                pressed_counter = 1U;
             }
         }
         break;
     case S_MOTION:
-        if ( (getSensorState() == SENSOR_ON) && (pressed_counter == 1U) )
+        if (ret == SENSOR_OFF)
         {
             motionState = S_MOTION_WAIT;
             // Set the timer to 50 ms
@@ -72,7 +70,7 @@ void motionDetectorStateMachineUpdate(void)
         }
         break;
     case S_MOTION_WAIT:
-        if (getSensorState() == SENSOR_OFF)
+        if (ret == SENSOR_ON)
         {
             motionState = S_MOTION;
         }
@@ -81,9 +79,6 @@ void motionDetectorStateMachineUpdate(void)
             if (sensorTimer == 0U)
             {
                 motionState = S_NOMOTION;
-
-                // Set the counter
-                pressed_counter = 0U;
             }
         }
         break;
