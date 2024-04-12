@@ -5,6 +5,60 @@
  *      Author: Trieu Huynh Pham Nhat
  */
 #include "switch.h"
+#include <FreeRTOS.h>
+#include <task.h>
+#include "system_task.h"
+#include "uartstdio.h"
+#include "debug.h"
+
+//Interrupt service routine
+void SWIntHandler(void)
+{
+
+    int state = GPIOIntStatus(SW_GPIO_BASE,  GPIO_INT_PIN_0 | GPIO_INT_PIN_4);
+    GPIOIntClear(SW_GPIO_BASE, SW1_PIN | SW2_PIN);
+
+    // Disable the ext interrupt to debouncing the SWs
+    GPIOIntDisable(SW_GPIO_BASE, SW1_PIN | SW2_PIN);
+
+    if( ( state & GPIO_INT_PIN_0 ) == GPIO_INT_PIN_0 )
+    {
+        // Give the SW1 semaphore indicating that it is being pressed
+        // This will attempt a wake the higher priority SwitchTask and continue
+        // execution there.
+        BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
+        // Give the semaphore and unblock the SW1Task.
+        xSemaphoreGiveFromISR(SW1PressedSemaphore_, &xHigherPriorityTaskWoken);
+
+        // If the SW1Task was successfully woken, then yield execution to it
+        // and go there now (instead of changing context to another task).
+        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+
+        DBG("SW1\n");
+    }
+
+    else if( ( state & GPIO_INT_PIN_4 ) == GPIO_INT_PIN_4 )
+    {
+        // Give the SW2 semaphore indicating that it is being pressed
+        // This will attempt a wake the higher priority switch task and continue
+        // execution there.
+        BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
+        // Give the semaphore and unblock the SW2Task.
+        xSemaphoreGiveFromISR(SW2PressedSemaphore_, &xHigherPriorityTaskWoken);
+
+        // If the SW2Task was successfully woken, then yield execution to it
+        //  and go there now (instead of changing context to another task).
+        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+    }
+
+    else
+    {
+        // do nothing
+    }
+
+}
 
 void switchInit(void)
 {

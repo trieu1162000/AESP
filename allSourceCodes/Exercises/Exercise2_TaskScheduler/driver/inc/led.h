@@ -13,7 +13,6 @@
 #include "inc/hw_memmap.h"
 #include "inc/hw_gpio.h"
 #include "driverlib/gpio.h"
-#define TARGET_IS_BLIZZARD_RB1
 #include "driverlib/rom.h"
 #include "driverlib/sysctl.h"
 
@@ -23,10 +22,10 @@
 enum ledNumber
 {
     LEDRED = 0,
-    LEDGREEN,
-    LEDBLUE
+    LEDBLUE,
+    LEDGREEN
 };
-enum ledState
+enum ledValue
 {
     OFF = 0,
     ON = 1
@@ -35,6 +34,7 @@ enum ledState
 extern uint8_t led_val;
 
 extern void ledInit(void);
-extern void ledControl(uint8_t);
+extern void ledControl(enum ledNumber, enum ledValue);
+
 
 #endif /* LED_H_ */

@@ -5,49 +5,22 @@
  *      Author: trieu
  */
 
+#include <stdbool.h>
+#include <FreeRTOS.h>
 #include <task.h>
 #include "driverlib/gpio.h"
 #include "inc/hw_memmap.h"
 #include "led.h"
 #include "switch.h"
 #include "system_task.h"
+#include "uartstdio.h"
+#include "debug.h"
 
-volatile uint32_t period_led_time = 0U;
-
-//Interrupt service routine
-void SWIntHandler(void){
-	GPIOIntClear(SW_GPIO_BASE, GPIO_INT_PIN_0|GPIO_INT_PIN_4);
-	int state = GPIOIntStatus(SW_GPIO_BASE, true);
-    if( ( state & GPIO_INT_PIN_0 ) == GPIO_INT_PIN_0 )
-    {
-        // Give the SW1 semaphore indicating that it is being pressed
-        // This will attempt a wake the higher priority SwitchTask and continue
-        // execution there.
-        BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-        
-        // Give the semaphore and unblock the SW1Task.
-        xSemaphoreGiveFromISR(SW1PressedSemaphore_, &xHigherPriorityTaskWoken);
-        
-        // If the SW1Task was successfully woken, then yield execution to it
-        // and go there now (instead of changing context to another task).
-        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-    }
-
-    if( ( state & GPIO_INT_PIN_4 ) == GPIO_INT_PIN_4 )
-    {
-        // Give the SW2 semaphore indicating that it is being pressed
-        // This will attempt a wake the higher priority switch task and continue
-        // execution there.
-        BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-        
-        // Give the semaphore and unblock the SW2Task.
-        xSemaphoreGiveFromISR(SW2PressedSemaphore_, &xHigherPriorityTaskWoken);
-        
-        // If the SW2Task was successfully woken, then yield execution to it
-        //	and go there now (instead of changing context to another task).
-        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-    }
-}
+static const swTime_t sendSW1TimeVal = SW1_TIME;
+static const swTime_t sendSW2TimeVal = SW2_TIME;
+static TickType_t current_tick = 0U;
+static TickType_t total_tick = 0U;
+static TickType_t rest_tick = 0U;
 
 void SW1Task(void *pvParameters)
 {
@@ -60,8 +33,20 @@ void SW1Task(void *pvParameters)
             continue;
         }
 
-        // Extend the time period by 5 seconds
-        period_led_time = period_led_time + (5000U / portTICK_PERIOD_MS);
+        // Debouncing the switch about 20ms
+        vTaskDelay( ( (TickType_t) 150U ) / portTICK_PERIOD_MS);
+
+        // Enable the ext interrupt again
+        GPIOIntClear(SW_GPIO_BASE, SW1_PIN | SW2_PIN);
+        GPIOIntEnable(SW_GPIO_BASE, SW1_PIN | SW2_PIN);
+
+        if( pdPASS != xQueueSend( timeEventQueue_,
+                    ( void * ) &sendSW1TimeVal,
+                    ( TickType_t ) 10 ) )
+        {
+            /* Failed to post the message, even after 10 ticks. */
+        }
+
     }
 }
 
@@ -76,45 +61,155 @@ void SW2Task(void *pvParameters)
             continue;
         }
 
-        // Expire the time period constantly
-        period_led_time = 0U;
+        // Debouncing the switch about 180ms
+        vTaskDelay( ( (TickType_t) 180U ) / portTICK_PERIOD_MS);
+
+        // Enable the ext interrupt again
+        GPIOIntClear(SW_GPIO_BASE, SW1_PIN | SW2_PIN);
+        GPIOIntEnable(SW_GPIO_BASE, SW1_PIN | SW2_PIN);
+
+        if( pdPASS != xQueueSend( timeEventQueue_,
+                    ( void * ) &sendSW2TimeVal,
+                    ( TickType_t ) 10 ) )
+        {
+            /* Failed to post the message, even after 10 ticks. */
+        }
+
     }
 }
 
 
 void ledTask(void *pvParameters)
 {
+    swTime_t recvTimeVal = (swTime_t) 0U;
 
     for (;;)
     {
         // Off all
         ledControl(LEDRED, OFF);
         ledControl(LEDGREEN, OFF);
-        ledControl(LEDBLUE, OFF);
 
         // Turn on Green LED
-        ledControl(LEDGREEN, ON)
+        ledControl(LEDGREEN, ON);
+
+        // Get the current tick before delaying
+        current_tick = xTaskGetTickCount();
+        DBG("Current tick: %d\n", current_tick);
+
+        // Reset the queue before recieve
+        recvTimeVal = (swTime_t) 0U;
 
         // Delay 15s
-        period_led_time = LED_GREEN_TIME;
-        vTaskDelay(period_led_time);
+        // Take message queue here
+        xQueueReceive( timeEventQueue_,
+                       &( recvTimeVal ),
+                       ( TickType_t ) LED_GREEN_TIME );
+        total_tick = LED_GREEN_TIME;
 
-        // Turn off Green LED
-        ledControl(LEDGREEN, OFF);
+        if(recvTimeVal == SW1_TIME)
+        {
+            // do nothing
+        }
+        else if(recvTimeVal == SW2_TIME)
+        {
+            do
+            {
+                // Get the rest tick which is not being delayed
+                rest_tick = current_tick + total_tick - xTaskGetTickCount();
+                DBG("rest tick: %d\n", rest_tick);
 
-        // Turn on Yellow (Red + Blue) LED
+                // Reset the queue before recieve again
+                recvTimeVal = (swTime_t) 0U;
+
+                // Delay the rest tick plus 5 seconds
+                rest_tick = rest_tick + (TickType_t) ( 5000U / portTICK_PERIOD_MS );
+                xQueueReceive( timeEventQueue_,
+                            &( recvTimeVal ),
+                            ( TickType_t ) rest_tick );
+                total_tick += (TickType_t) ( 5000U / portTICK_PERIOD_MS );
+            } while (recvTimeVal == SW2_TIME);
+
+
+        }
+
+        // Turn on Yellow (Red + Green) LED
         ledControl(LEDRED, ON);
-        ledControl(LEDBLUE, ON);
+
+        // Get the current tick before delaying
+        current_tick = xTaskGetTickCount();
+        DBG("Current tick: %d\n", current_tick);
+
+        // Reset the queue before recieve
+        recvTimeVal = (swTime_t) 0U;
 
         // Delay 3s
-        period_led_time = LED_YELLOW_TIME;
-        vTaskDelay(period_led_time);
+        xQueueReceive( timeEventQueue_,
+                       &( recvTimeVal ),
+                       ( TickType_t ) LED_YELLOW_TIME );
+        total_tick = LED_YELLOW_TIME;
 
-        // Turn on Red LED (off Blue LED)
-        ledControl(LEDBLUE, OFF);
+        if(recvTimeVal == SW1_TIME)
+        {
+            // do nothing
+        }
+        else if(recvTimeVal == SW2_TIME)
+        {
+            do
+            {
+                // Get the rest tick which is not being delayed
+                rest_tick = current_tick + total_tick - xTaskGetTickCount();
+                DBG("rest tick: %d\n", rest_tick);
+
+                // Reset the queue before recieve again
+                recvTimeVal = (swTime_t) 0U;
+
+                // Delay the rest tick plus 5 seconds
+                rest_tick = rest_tick + (TickType_t) ( 5000U / portTICK_PERIOD_MS );
+                xQueueReceive( timeEventQueue_,
+                            &( recvTimeVal ),
+                            ( TickType_t ) rest_tick );
+                total_tick += (TickType_t) ( 5000U / portTICK_PERIOD_MS );
+            } while (recvTimeVal == SW2_TIME);
+        }
+
+        // Turn on Red LED (off Green LED)
+        ledControl(LEDGREEN, OFF);
+
+        // Get the current tick before delay
+        current_tick = xTaskGetTickCount();
+        DBG("Current tick: %d\n", current_tick);
+
+        // Reset the queue before recieve
+        recvTimeVal = (swTime_t) 0U;
 
         // Delay 15s
-        period_led_time = LED_RED_TIME;
-        vTaskDelay(period_led_time);
+        xQueueReceive( timeEventQueue_,
+                       &( recvTimeVal ),
+                       ( TickType_t ) LED_RED_TIME );
+        total_tick = LED_RED_TIME;
+
+        if(recvTimeVal == SW1_TIME)
+        {
+            // do nothing
+        }
+        else if(recvTimeVal == SW2_TIME)
+        {
+            do
+            {
+                // Get the rest tick which is not being delayed
+                rest_tick = current_tick + total_tick - xTaskGetTickCount();
+                DBG("rest tick: %d\n", rest_tick);
+
+                // Reset the queue before recieve again
+                recvTimeVal = (swTime_t) 0U;
+
+                // Delay the rest tick plus 5 seconds
+                rest_tick = rest_tick + (TickType_t) ( 5000U / portTICK_PERIOD_MS );
+                xQueueReceive( timeEventQueue_,
+                            &( recvTimeVal ),
+                            ( TickType_t ) rest_tick );
+                total_tick += (TickType_t) ( 5000U / portTICK_PERIOD_MS );
+            } while (recvTimeVal == SW2_TIME);
+        }
     }
 }

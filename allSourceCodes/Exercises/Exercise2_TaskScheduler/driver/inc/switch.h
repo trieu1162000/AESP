@@ -14,7 +14,6 @@
 #include "inc/hw_memmap.h"
 #include "inc/hw_gpio.h"
 #include "driverlib/gpio.h"
-#define TARGET_IS_BLIZZARD_RB1
 #include "driverlib/rom.h"
 #include "driverlib/sysctl.h"
 
@@ -32,6 +31,6 @@ typedef enum
 } sw_t;
 
 extern void switchInit(void);
-extern sw_t switchState(int SWnumber);
+extern sw_t switchState(uint8_t);
 
 #endif /* SWITCHES_H_ */
