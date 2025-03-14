@@ -1,4 +1,4 @@
-# Advanced Embedded System Programming Subject
+# MSc Coursework: Advanced Embedded System Programming Subject
 ### Target: Tiva C TM4C123GH6PM
 ### Host: Window
 ### Software: CCS, TivaWare, FreeRTOS
